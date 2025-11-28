@@ -13,8 +13,55 @@ class Project extends Model
     protected $primaryKey = 'project_id'; // <- Important
     public $incrementing = false; // if it's a string or non-auto ID
 
+    protected $casts = [
+        'created_on' => 'datetime',
+        'updated_on' => 'datetime',
+        'submitted_on' => 'datetime',
+        'under_review_on' => 'datetime',
+        'validated_on' => 'datetime',
+        'recommended_on' => 'datetime',
+        'aip_issued_on' => 'datetime',
+        'aip_signed_on' => 'datetime',
+        'set_up_completed_on' => 'datetime',
+        'compliant_on' => 'datetime',
+        'launched_on' => 'datetime',
+        'completed_on' => 'datetime',
+    ];
+
     public function updates()
     {
         return $this->hasMany(\App\Models\Update::class, 'project_id', 'project_id');
+    }
+
+    public function investorDocuments()
+    {
+        return $this->hasMany(ProjectInvestorDocument::class, 'proposal_id', 'id')
+            ->where('deleted', 0)
+            ->orderBy('document_id');
+    }
+
+    public function property()
+    {
+        return $this->hasOne(Property::class, 'proposal_id', 'id');
+    }
+
+    public function getExpectedPayoutDateAttribute()
+    {
+        $term = optional($this->property)->investment_turnaround_time;
+
+        if (!$term) {
+            return null;
+        }
+
+        $start = optional($this->property)->purchase_completion_date
+            ?? $this->launched_on
+            ?? $this->set_up_completed_on
+            ?? $this->created_on;
+
+        if (!$start) {
+            return null;
+        }
+
+        return $start->copy()->addMonths((int) $term);
     }
 }

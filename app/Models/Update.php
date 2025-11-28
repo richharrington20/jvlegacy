@@ -18,7 +18,8 @@ class Update extends Model
     protected $casts = [
         'category' => 'integer',
         'sent_on' => 'datetime',
-        'comment' => 'string'
+        'comment' => 'string',
+        'deleted' => 'integer',
     ];
 
     // Only return records with category = 3
@@ -39,6 +40,12 @@ class Update extends Model
     public function scopeRecent($query, $limit = 5)
     {
         return $query->orderByDesc('created_at')->limit($limit);
+    }
+
+    // Scope to exclude deleted records
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('deleted', 0);
     }
 
 

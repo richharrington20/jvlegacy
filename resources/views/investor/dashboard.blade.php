@@ -5,22 +5,91 @@
     <div class="mx-auto mt-10" x-data="updateModal()">
         <h1 class="text-2xl font-bold mb-4">Welcome, {{ $account->name }}</h1>
 
-        <p class="text-gray-700 mb-4">Here’s your investor dashboard. From here, you’ll be able to view your investment history and download documents related to your projects.</p>
-
-        <div class="mb-6 bg-yellow-100 border-l-4 border-yellow-400 p-4 rounded-xl">
-            <div class="text-yellow-800 font-semibold mb-1">Notice</div>
-            <div class="text-yellow-700 text-sm">
-                Viewing documents online is currently unavailable. Please bear with us as we work to fix the issue.
+        @if (session()->has('masquerading_as'))
+            <div class="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-blue-800 font-semibold">Masquerading as account #{{ session('masquerading_as') }}</p>
+                        <p class="text-sm text-blue-700">Any actions you take will affect this investor.</p>
+                    </div>
+                    <form method="POST" action="{{ route('admin.investor.stopMasquerade') }}">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded hover:bg-blue-700">
+                            Stop Masquerading
+                        </button>
+                    </form>
+                </div>
             </div>
+        @endif
+
+        @if (session('status'))
+            <div class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        <div class="mb-8 bg-white shadow rounded p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xl font-semibold">Notifications</h2>
+                @if($notifications->count())
+                    <form method="POST" action="{{ route('investor.notifications.read_all') }}">
+                        @csrf
+                        <button type="submit" class="text-sm text-blue-600 hover:underline">Mark all read</button>
+                    </form>
+                @endif
+            </div>
+            @if($notifications->isEmpty())
+                <p class="text-gray-500 text-sm">No notifications yet.</p>
+            @else
+                <ul class="divide-y divide-gray-100">
+                    @foreach($notifications as $notification)
+                        <li class="py-2 flex items-start justify-between {{ $notification->read_at ? 'text-gray-500' : 'text-gray-900' }}">
+                            <div>
+                                <p class="text-sm">{{ $notification->message }}</p>
+                                <p class="text-xs text-gray-400">{{ $notification->created_at?->format('d M Y H:i') }}</p>
+                                @if($notification->link)
+                                    <a href="{{ $notification->link }}" class="text-xs text-blue-600 hover:underline">View</a>
+                                @endif
+                            </div>
+                            @if(!$notification->read_at)
+                                <form method="POST" action="{{ route('investor.notifications.read', $notification->id) }}">
+                                    @csrf
+                                    <button type="submit" class="text-xs text-blue-600 hover:underline">Mark read</button>
+                                </form>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
         </div>
+
+        <p class="text-gray-700 mb-4">
+            Here’s your investor dashboard. From here, you’ll be able to view your investment history,
+            download documents, track payouts, and raise support tickets.
+        </p>
 
         <h2 class="text-3xl mb-8">Your Investments</h2>
 
         @foreach ($investments as $projectId => $projectInvestments)
-            <h3 class="text-2xl mb-4">{{ $projectInvestments->first()->project->name ?? 'Unknown Project' }}</h3>
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+                <h3 class="text-2xl">{{ $projectInvestments->first()->project->name ?? 'Unknown Project' }}</h3>
+                <div>
+                    <button
+                        class="text-sm text-blue-600 hover:underline"
+                        onclick="document.getElementById('support-modal-{{ $projectId }}').showModal()"
+                    >
+                        Raise Support Request
+                    </button>
+                </div>
+            </div>
             @php $project = $projectInvestments->first()->project; @endphp
+            @php $documents = $projectDocuments[$projectId] ?? collect(); @endphp
+            @php $documentLogs = $projectDocumentLogs[$projectId] ?? collect(); @endphp
+            @php $payouts = $projectPayouts[$projectId] ?? collect(); @endphp
+            @php $totalPaid = $payouts->where('paid', 1)->sum('amount'); @endphp
+            @php $timeline = $projectTimelines[$projectId] ?? null; @endphp
 
-            <div class="bg-white rounded shadow overflow-x-auto mb-8">
+            <div id="project-{{ $projectId }}" class="bg-white rounded shadow overflow-x-auto mb-8">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -50,19 +119,40 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $inv->type_label }}
                                 </td>
-                                <td class="px-6 py-4 w-16 whitespace-nowrap text-sm text-stone-300 underline">
-                                    <div class="flex flex-row">
-                                        <a href="#">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                            </svg>
-                                        </a>
-                                        <a href="#">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.621 9.879a3 3 0 0 0-5.02 2.897l.164.609a4.5 4.5 0 0 1-.108 2.676l-.157.439.44-.22a2.863 2.863 0 0 1 2.185-.155c.72.24 1.507.184 2.186-.155L15 18M8.25 15.75H12m-1.5-13.5H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                            </svg>
-                                        </a>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <div class="flex flex-wrap gap-2">
+                                        @forelse($documents as $document)
+                                            <a href="{{ $document->url }}"
+                                               target="_blank"
+                                               class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded bg-purple-600 text-white hover:bg-purple-700">
+                                                {{ $document->name ?? 'Download' }}
+                                            </a>
+                                        @empty
+                                            <span class="text-gray-400">No documents yet</span>
+                                        @endforelse
                                     </div>
+                                    @if($documents->count())
+                                        <form method="POST" action="{{ route('investor.documents.email', $project->project_id) }}" class="mt-2">
+                                            @csrf
+                                            <button type="submit" class="text-xs text-purple-700 underline hover:text-purple-900">
+                                                Email me these documents
+                                            </button>
+                                        </form>
+                                    @endif
+                                    @if($documentLogs->count())
+                                        <div class="mt-3">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">Recent Document Emails</p>
+                                            <ul class="text-xs text-gray-600 space-y-1">
+                                                @foreach($documentLogs as $log)
+                                                    <li>
+                                                        {{ $log->document_name ?? 'Document' }} &middot;
+                                                        sent {{ $log->sent_at?->format('d M Y H:i') ?? '' }}
+                                                        to {{ $log->recipient }}
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -108,6 +198,106 @@
                     </div>
                 </div>
             @endif
+
+            @if($payouts->count())
+                <div class="mb-8 bg-gray-50 border-l-4 border-green-400 p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-semibold text-green-700">Payout History</h4>
+                        <div class="text-sm text-gray-600">
+                            Total Paid: {!! money($totalPaid) !!}
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Due On</th>
+                                    <th class="px-4 py-2 text-left">Amount</th>
+                                    <th class="px-4 py-2 text-left">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($payouts as $payout)
+                                    <tr>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ optional($payout->update)->due_on ? $payout->update->due_on->format('d M Y') : '—' }}</td>
+                                        <td class="px-4 py-2">{!! money($payout->amount ?? 0) !!}</td>
+                                        <td class="px-4 py-2">
+                                            @if($payout->paid)
+                                                <span class="text-green-700 font-semibold">Paid {{ $payout->paid_on ? $payout->paid_on->format('d M Y') : '' }}</span>
+                                            @else
+                                                <span class="text-yellow-600 font-semibold">Pending</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            @if($timeline)
+                <div class="mb-8 bg-white border border-gray-100 rounded p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h4 class="text-lg font-semibold">Payment Timeline</h4>
+                            <p class="text-sm text-gray-500">From due diligence to payout.</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">Forecast Payout</p>
+                            <p class="text-lg font-semibold">
+                                @if($timeline['expected_payout'])
+                                    {{ $timeline['expected_payout']->format('d M Y') }}
+                                @else
+                                    TBC
+                                @endif
+                            </p>
+                            @if($timeline['investment_term'])
+                                <p class="text-xs text-gray-500">{{ $timeline['investment_term'] }} month term</p>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        @foreach($timeline['stages'] as $stage)
+                            <div class="flex items-center justify-between px-3 py-2 border rounded {{ $stage['completed'] ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-gray-50' }}">
+                                <div>
+                                    <p class="text-sm font-semibold {{ $stage['completed'] ? 'text-green-800' : 'text-gray-700' }}">{{ $stage['label'] }}</p>
+                                    <p class="text-xs text-gray-500">{{ $stage['date'] ? $stage['date']->format('d M Y') : 'Pending' }}</p>
+                                </div>
+                                @if($stage['completed'])
+                                    <span class="text-green-600 text-lg">✔</span>
+                                @else
+                                    <span class="text-gray-400 text-lg">•</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <dialog id="support-modal-{{ $projectId }}" class="rounded-lg w-full max-w-2xl p-0">
+                <form method="POST" action="{{ route('investor.support.store', $project->project_id) }}">
+                    @csrf
+                    <div class="p-6 border-b">
+                        <h4 class="text-xl font-semibold">Support Request · {{ $project->name }}</h4>
+                        <p class="text-sm text-gray-500 mt-1">Tell us what you need help with; the team will reply by email.</p>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Subject</label>
+                            <input type="text" name="subject" required class="w-full border rounded px-3 py-2" placeholder="e.g. Questions about Q3 payout" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Details</label>
+                            <textarea name="message" rows="5" required class="w-full border rounded px-3 py-2" placeholder="Give us as much detail as possible..."></textarea>
+                        </div>
+                    </div>
+                    <div class="p-4 border-t flex justify-end gap-3 bg-gray-50 rounded-b-lg">
+                        <button type="button" class="px-4 py-2 text-sm text-gray-600" onclick="document.getElementById('support-modal-{{ $projectId }}').close()">Cancel</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded hover:bg-blue-700">Send request</button>
+                    </div>
+                </form>
+            </dialog>
             </div>
         @endforeach
     <!-- Modal rendered once, outside the loop -->

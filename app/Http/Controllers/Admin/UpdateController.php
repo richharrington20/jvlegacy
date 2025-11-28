@@ -6,14 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Update;
 use App\Models\Investments;
+use App\Models\InvestorNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class UpdateController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Update::query();
+        $query = Update::notDeleted();
 
         // Filter by project_id if provided
         if ($request->filled('project_id')) {
@@ -38,7 +40,43 @@ class UpdateController extends Controller
 
     public function show($id)
     {
-        return view('admin.updates.show');
+        $update = Update::with('project')->findOrFail($id);
+        return view('admin.updates.show', compact('update'));
+    }
+
+    public function edit($id)
+    {
+        $update = Update::with('project')->findOrFail($id);
+        $projects = Project::orderBy('name')->get();
+        return view('admin.updates.edit', compact('update', 'projects'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'project_id' => 'required|exists:legacy.projects,project_id',
+            'category' => 'nullable|integer',
+            'comment' => 'required|string',
+        ]);
+
+        $update = Update::findOrFail($id);
+        $update->project_id = $validated['project_id'];
+        $update->category = $validated['category'] ?? 3;
+        $update->comment = $validated['comment'];
+        $update->save();
+
+        return redirect()->route('admin.updates.index')
+            ->with('success', 'Update updated successfully.');
+    }
+
+    public function destroy($id)
+    {
+        $update = Update::findOrFail($id);
+        $update->deleted = 1;
+        $update->save();
+
+        return redirect()->route('admin.updates.index')
+            ->with('success', 'Update deleted successfully.');
     }
 
     public function store(Request $request)
@@ -96,6 +134,23 @@ class UpdateController extends Controller
                 $message->to($email)
                     ->subject('New Project Update');
             });
+        }
+
+        $notificationMessage = Str::limit(strip_tags($update->comment), 200);
+        foreach ($investorAccounts as $investorAccount) {
+            InvestorNotification::firstOrCreate(
+                [
+                    'account_id' => $investorAccount->id,
+                    'source_type' => 'update',
+                    'source_id' => $update->id,
+                ],
+                [
+                    'project_id' => $update->project_id,
+                    'type' => 'update',
+                    'message' => $notificationMessage,
+                    'link' => url('/investor/dashboard') . '#project-' . $update->project_id,
+                ]
+            );
         }
 
         // Count emails sent (excluding Ben and Scott)

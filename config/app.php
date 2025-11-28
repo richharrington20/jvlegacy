@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Legacy System URLs
+    |--------------------------------------------------------------------------
+    |
+    | Used when we need to link back to legacy generated documents.
+    |
+    */
+
+    'sys_url' => env('SYS_URL', 'https://sys.jaevee.co.uk'),
+    'public_url' => env('PUBLIC_URL', 'https://jaevee.co.uk'),
+
 ];

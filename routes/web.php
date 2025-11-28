@@ -5,25 +5,30 @@ use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\InvestmentController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Investor\InvestorDashboardController;
+use App\Http\Controllers\Investor\InvestorDocumentController;
+use App\Http\Controllers\Investor\InvestorNotificationController;
+use App\Http\Controllers\Investor\InvestorSupportController;
+use App\Http\Controllers\PublicProjectController;
 use App\Http\Controllers\UpdateShowController;
 
 use App\Http\Controllers\InvestorAuthController;
 use App\Models\Account;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Volt;
 
 
 Route::get('/', function () {
-    return redirect()->route('investor.login');
+    $highlightedProjects = \App\Models\Project::with('property')
+        ->whereIn('status', [
+            \App\Models\Project::STATUS_PENDING_EQUITY,
+            \App\Models\Project::STATUS_PENDING_PURCHASE,
+            \App\Models\Project::STATUS_PENDING_CONSTRUCTION,
+            \App\Models\Project::STATUS_UNDER_CONSTRUCTION,
+        ])->orderByDesc('launched_on')->limit(4)->get();
+
+    return view('home', compact('highlightedProjects'));
 })->name('home');
-
-Route::get('/login', function () {
-    return redirect()->route('investor.login');
-})->name('login');
-
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
 
 Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(function () {
     Route::get('/dashboard', [InvestmentController::class, 'index'])->name('investments.index');
@@ -32,6 +37,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
 
     Route::get('/updates', [UpdateController::class, 'index'])->name('updates.index');
     Route::post('/updates', [UpdateController::class, 'store'])->name('updates.store');
+    Route::get('/updates/{id}', [UpdateController::class, 'show'])->name('updates.show');
+    Route::get('/updates/{id}/edit', [UpdateController::class, 'edit'])->name('updates.edit');
+    Route::put('/updates/{id}', [UpdateController::class, 'update'])->name('updates.update');
+    Route::delete('/updates/{id}', [UpdateController::class, 'destroy'])->name('updates.destroy');
 
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/accounts/{id}', [AccountController::class, 'show'])->name('accounts.show');
@@ -73,13 +82,16 @@ Route::prefix('investor')->name('investor.')->group(function () {
 
     Route::middleware('auth:investor')->group(function () {
         Route::get('/dashboard', InvestorDashboardController::class)->name('dashboard');
-        // Protect all other investor routes here as needed
+        Route::post('/projects/{project}/documents/email', [InvestorDocumentController::class, 'email'])->name('documents.email');
+        Route::post('/notifications/{notification}/read', [InvestorNotificationController::class, 'markRead'])->name('notifications.read');
+        Route::post('/notifications/mark-all-read', [InvestorNotificationController::class, 'markAllRead'])->name('notifications.read_all');
+        Route::post('/projects/{project}/support', [InvestorSupportController::class, 'store'])->name('support.store');
     });
 });
 
 Route::get('/updates/{id}', UpdateShowController::class)->name('updates.show');
 
-// Route for sending me a test email
-Route::get('/test-email', [UpdateController::class, 'sendTestEmail'])->name('test.email');
+Route::get('/projects', [PublicProjectController::class, 'index'])->name('public.projects.index');
+Route::get('/projects/{project}', [PublicProjectController::class, 'show'])->name('public.projects.show');
 
 require __DIR__.'/auth.php';
