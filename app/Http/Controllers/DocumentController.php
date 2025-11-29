@@ -136,9 +136,18 @@ class DocumentController extends Controller
         $checkedPaths = [];
         foreach ($possiblePaths as $path) {
             $checkedPaths[] = $path;
-            if (file_exists($path) && is_readable($path)) {
+            $exists = file_exists($path);
+            $readable = $exists && is_readable($path);
+            
+            \Log::info('Checking file path', [
+                'path' => $path,
+                'exists' => $exists,
+                'readable' => $readable,
+            ]);
+            
+            if ($exists && $readable) {
                 $filePath = $path;
-                \Log::info('Document file found', ['path' => $filePath]);
+                \Log::info('Document file found', ['path' => $filePath, 'size' => filesize($filePath)]);
                 break;
             }
         }
@@ -148,38 +157,102 @@ class DocumentController extends Controller
             \Log::info('Document not found in expected paths, attempting directory scan', [
                 'proposal_id' => $document->proposal_id,
                 'hash' => $document->hash,
+                'document_id' => $document->id,
             ]);
             
-            // Try to find the base directory
+            // Try to find the base directory - check multiple possible locations
             $baseDirs = [
                 base_path('../jvsystem/App/Cache/Docs/Investor'),
                 dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor',
                 '/var/www/jvsystem/App/Cache/Docs/Investor',
                 '/home/betajaeveecouk/beta.jaevee.co.uk/App/Cache/Docs/Investor',
+                '/home/*/jvsystem/App/Cache/Docs/Investor',
+                // Try with different directory structures
+                base_path('../App/Cache/Docs/Investor'),
+                storage_path('app/documents/investor'),
             ];
             
+            // Also try to find any directory containing "Cache/Docs/Investor"
+            $searchDirs = [
+                base_path('..'),
+                dirname(base_path()),
+                '/var/www',
+                '/home',
+            ];
+            
+            foreach ($searchDirs as $searchDir) {
+                if (is_dir($searchDir)) {
+                    try {
+                        $iterator = new \RecursiveIteratorIterator(
+                            new \RecursiveDirectoryIterator($searchDir, \RecursiveDirectoryIterator::SKIP_DOTS),
+                            \RecursiveIteratorIterator::SELF_FIRST
+                        );
+                        
+                        foreach ($iterator as $file) {
+                            if ($file->isDir() && str_contains($file->getPathname(), 'Cache/Docs/Investor')) {
+                                $baseDirs[] = $file->getPathname();
+                                \Log::info('Found potential docs directory', ['path' => $file->getPathname()]);
+                                // Limit search to avoid timeout
+                                if (count($baseDirs) > 10) break 2;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Skip directories we can't access
+                        continue;
+                    }
+                }
+            }
+            
             foreach ($baseDirs as $baseDir) {
+                // Handle wildcards
+                if (str_contains($baseDir, '*')) {
+                    $pattern = str_replace('*', '*', $baseDir);
+                    $matches = glob($pattern);
+                    if ($matches) {
+                        $baseDir = $matches[0];
+                    } else {
+                        continue;
+                    }
+                }
+                
                 if (is_dir($baseDir)) {
+                    \Log::info('Checking base directory', ['dir' => $baseDir]);
+                    
                     // Try the proposal_id directory
                     $proposalDir = $baseDir . '/' . $document->proposal_id;
                     if (is_dir($proposalDir)) {
+                        \Log::info('Found proposal directory', ['dir' => $proposalDir]);
+                        
                         $filePath = $proposalDir . '/' . $document->hash . '.pdf';
                         if (file_exists($filePath)) {
                             \Log::info('Document found by directory scan', ['path' => $filePath]);
                             break;
                         }
                         
-                        // Scan the directory for files matching the hash
+                        // List all files in the directory for debugging
                         $files = glob($proposalDir . '/*.pdf');
+                        \Log::info('Files in proposal directory', [
+                            'dir' => $proposalDir,
+                            'files' => array_map('basename', $files),
+                            'expected_hash' => $document->hash,
+                        ]);
+                        
+                        // Scan the directory for files matching the hash
                         foreach ($files as $file) {
-                            if (str_contains(basename($file, '.pdf'), $document->hash) || 
-                                str_contains($document->hash, basename($file, '.pdf'))) {
+                            $fileHash = basename($file, '.pdf');
+                            if ($fileHash === $document->hash || 
+                                str_contains($fileHash, $document->hash) || 
+                                str_contains($document->hash, $fileHash)) {
                                 $filePath = $file;
                                 \Log::info('Document found by hash matching in directory', ['path' => $filePath]);
                                 break 2;
                             }
                         }
+                    } else {
+                        \Log::info('Proposal directory not found', ['dir' => $proposalDir]);
                     }
+                } else {
+                    \Log::info('Base directory not found or not accessible', ['dir' => $baseDir]);
                 }
             }
         }

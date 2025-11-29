@@ -104,6 +104,79 @@ Route::get('/document/investor/{hash}', [DocumentController::class, 'investor'])
     ->where('hash', '.*')
     ->name('document.investor');
 
+// Debug route to check document file locations (admin only)
+Route::get('/admin/debug/document/{documentId}', function ($documentId) {
+    $document = \App\Models\ProjectInvestorDocument::find($documentId);
+    
+    if (!$document) {
+        return response()->json(['error' => 'Document not found'], 404);
+    }
+    
+    $baseDirs = [
+        base_path('../jvsystem/App/Cache/Docs/Investor'),
+        dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor',
+        '/var/www/jvsystem/App/Cache/Docs/Investor',
+        '/home/betajaeveecouk/beta.jaevee.co.uk/App/Cache/Docs/Investor',
+    ];
+    
+    $results = [
+        'document' => [
+            'id' => $document->id,
+            'proposal_id' => $document->proposal_id,
+            'hash' => $document->hash,
+            'name' => $document->name,
+        ],
+        'checked_directories' => [],
+        'found_files' => [],
+    ];
+    
+    foreach ($baseDirs as $baseDir) {
+        $exists = is_dir($baseDir);
+        $readable = $exists && is_readable($baseDir);
+        
+        $results['checked_directories'][] = [
+            'path' => $baseDir,
+            'exists' => $exists,
+            'readable' => $readable,
+        ];
+        
+        if ($exists && $readable) {
+            $proposalDir = $baseDir . '/' . $document->proposal_id;
+            $proposalExists = is_dir($proposalDir);
+            
+            if ($proposalExists) {
+                $expectedFile = $proposalDir . '/' . $document->hash . '.pdf';
+                $fileExists = file_exists($expectedFile);
+                
+                $results['checked_directories'][] = [
+                    'path' => $proposalDir,
+                    'exists' => $proposalExists,
+                    'readable' => is_readable($proposalDir),
+                ];
+                
+                if ($fileExists) {
+                    $results['found_files'][] = [
+                        'path' => $expectedFile,
+                        'size' => filesize($expectedFile),
+                        'readable' => is_readable($expectedFile),
+                    ];
+                } else {
+                    // List all files in the directory
+                    $files = glob($proposalDir . '/*.pdf');
+                    $results['found_files'][] = [
+                        'path' => $proposalDir,
+                        'expected_file' => $expectedFile,
+                        'exists' => false,
+                        'available_files' => array_map('basename', $files),
+                    ];
+                }
+            }
+        }
+    }
+    
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+})->middleware('auth:investor')->name('admin.debug.document');
+
 // One-time route to run missing migrations (remove after use)
 Route::get('/run-migrations', function () {
     try {
