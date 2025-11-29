@@ -42,12 +42,17 @@ class ProjectController extends Controller
             ->orderByDesc('sent_on')
             ->paginate(20);
 
-        // Get document email logs for this project
-        $documentLogs = DocumentEmailLog::with('account')
-            ->where('project_id', $project->project_id)
-            ->orderByDesc('sent_at')
-            ->limit(50)
-            ->get();
+        // Get document email logs for this project (if table exists)
+        try {
+            $documentLogs = DocumentEmailLog::with('account')
+                ->where('project_id', $project->project_id)
+                ->orderByDesc('sent_at')
+                ->limit(50)
+                ->get();
+        } catch (\Exception $e) {
+            // Table doesn't exist yet, use empty collection
+            $documentLogs = collect();
+        }
 
         return view('admin.projects.show', compact(
             'project',
@@ -77,16 +82,20 @@ class ProjectController extends Controller
 
             Mail::to($account->email)->send(new ProjectDocumentsMail($account, $project, $documents));
 
-            foreach ($documents as $document) {
-                DocumentEmailLog::create([
-                    'project_id' => $project->project_id,
-                    'account_id' => $account->id,
-                    'document_id' => $document->id ?? null,
-                    'document_name' => $document->name ?? null,
-                    'recipient' => $account->email,
-                    'sent_by' => auth()->id(),
-                    'sent_at' => now(),
-                ]);
+            try {
+                foreach ($documents as $document) {
+                    DocumentEmailLog::create([
+                        'project_id' => $project->project_id,
+                        'account_id' => $account->id,
+                        'document_id' => $document->id ?? null,
+                        'document_name' => $document->name ?? null,
+                        'recipient' => $account->email,
+                        'sent_by' => auth()->id(),
+                        'sent_at' => now(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Table doesn't exist yet, skip logging
             }
 
             return back()->with('success', 'Documents sent to ' . $account->email);
@@ -111,16 +120,20 @@ class ProjectController extends Controller
                 try {
                     Mail::to($account->email)->send(new ProjectDocumentsMail($account, $project, $documents));
 
-                    foreach ($documents as $document) {
-                        DocumentEmailLog::create([
-                            'project_id' => $project->project_id,
-                            'account_id' => $account->id,
-                            'document_id' => $document->id ?? null,
-                            'document_name' => $document->name ?? null,
-                            'recipient' => $account->email,
-                            'sent_by' => auth()->id(),
-                            'sent_at' => now(),
-                        ]);
+                    try {
+                        foreach ($documents as $document) {
+                            DocumentEmailLog::create([
+                                'project_id' => $project->project_id,
+                                'account_id' => $account->id,
+                                'document_id' => $document->id ?? null,
+                                'document_name' => $document->name ?? null,
+                                'recipient' => $account->email,
+                                'sent_by' => auth()->id(),
+                                'sent_at' => now(),
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        // Table doesn't exist yet, skip logging
                     }
                     $sentCount++;
                 } catch (\Exception $e) {
