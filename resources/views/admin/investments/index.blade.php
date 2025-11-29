@@ -17,51 +17,47 @@
         </div>
 
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" class="mb-4 flex flex-wrap gap-4 items-end">
+            <form method="GET" class="flex flex-wrap gap-4 items-end">
+                <div class="w-full md:w-48">
+                    <label class="block text-sm font-medium mb-1 text-gray-700">Project</label>
+                    <select name="project_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Projects</option>
+                        @foreach ($projects as $proj)
+                            @if( $proj->project_id )
+                            <option value="{{ $proj->project_id }}" @selected(request('project_id') == $proj->project_id)>
+                                {{ $proj->project_id }} – {{ $proj->name }}
+                            </option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
 
-            <div class="w-full md:w-48">
-                <label class="block text-sm font-medium mb-1">Project</label>
-                <select name="project_id" class="w-full px-3 py-2 border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 rounded-md">
-                    <option value="">All Projects</option>
-                    @foreach ($projects as $proj)
-                        @if( $proj->project_id )
-                        <option value="{{ $proj->project_id }}" @selected(request('project_id') == $proj->project_id)>
-                            {{ $proj->project_id }} – {{ $proj->name }}
-                        </option>
-                        @endif
-                    @endforeach
-                </select>
+                <div class="w-full md:w-48">
+                    <label class="block text-sm font-medium mb-1 text-gray-700">Paid</label>
+                    <select name="paid" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Any</option>
+                        <option value="1" @selected(request('paid') === '1')>Yes</option>
+                        <option value="0" @selected(request('paid') === '0')>No</option>
+                    </select>
+                </div>
+
+                <div class="w-full md:w-48">
+                    <label class="block text-sm font-medium mb-1 text-gray-700">Search Name</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Investor name..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="w-full md:w-auto flex gap-2">
+                    <button type="submit" class="h-10 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">Filter</button>
+                    <a href="{{ route('admin.investments.index') }}" class="h-10 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center justify-center font-medium transition-colors">Clear</a>
+                </div>
+            </form>
+            <div class="mt-4">
+                <a href="{{ route('admin.investments.export', request()->query()) }}"
+                   class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm hover:shadow-md">
+                    <i class="fas fa-download mr-2"></i>
+                    Export CSV
+                </a>
             </div>
-
-            <div class="w-full md:w-48">
-                <label class="block text-sm font-medium mb-1">Paid</label>
-                <select name="paid" class="w-full px-3 py-2 border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 rounded-md">
-                    <option value="">Any</option>
-                    <option value="1" @selected(request('paid') === '1')>Yes</option>
-                    <option value="0" @selected(request('paid') === '0')>No</option>
-                </select>
-            </div>
-
-            <div class="w-full md:w-48">
-                <label class="block text-sm font-medium mb-1">Search Name</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Investor name..." class="w-full px-3 py-2 border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 rounded-md">
-            </div>
-
-            <div class="w-full md:w-auto flex gap-2">
-                <button type="submit" class="h-10 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">Filter</button>
-                <a href="{{ route('admin.investments.index') }}" class="h-10 px-4 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center justify-center">Clear</a>
-            </div>
-
-        </form>
-        <div class="w-full md:w-auto mt-2 md:mt-6">
-            <a href="{{ route('admin.investments.export', request()->query()) }}"
-               class="inline-block p-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-                Export CSV
-            </a>
-        </div>
-
-    </div>
-
         </div>
     </div>
 
@@ -162,10 +158,4 @@
     <div class="mt-6">
         {{ $investments->links() }}
     </div>
-
-
-    <div class="mt-4">
-        {{ $investments->links() }}
-    </div>
-
 @endsection
