@@ -104,6 +104,37 @@ Route::get('/document/investor/{hash}', [DocumentController::class, 'investor'])
     ->where('hash', '.*')
     ->name('document.investor');
 
+// Test route to check if legacy system is accessible
+Route::get('/admin/test-legacy-proxy/{hash}', function ($hash) {
+    $legacyUrl = config('app.legacy_system_url', 'https://beta.jaevee.co.uk');
+    $proxyUrl = $legacyUrl . '/document/investor/' . $hash;
+    
+    try {
+        $response = \Illuminate\Support\Facades\Http::timeout(15)
+            ->withoutVerifying()
+            ->withOptions(['allow_redirects' => true])
+            ->get($proxyUrl);
+        
+        return response()->json([
+            'legacy_url' => $legacyUrl,
+            'proxy_url' => $proxyUrl,
+            'status' => $response->status(),
+            'successful' => $response->successful(),
+            'headers' => $response->headers(),
+            'body_size' => strlen($response->body()),
+            'body_preview' => substr($response->body(), 0, 500),
+            'is_pdf' => str_starts_with($response->body(), '%PDF'),
+        ], 200, [], JSON_PRETTY_PRINT);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'error_type' => get_class($e),
+            'legacy_url' => $legacyUrl,
+            'proxy_url' => $proxyUrl,
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+})->middleware('auth:investor')->name('admin.test.legacy.proxy');
+
 // Route to find where documents are actually stored
 Route::get('/admin/find-docs-directory', function () {
     $results = [

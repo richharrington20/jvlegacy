@@ -332,16 +332,32 @@ class DocumentController extends Controller
                 'document_id' => $document->id,
                 'proposal_id' => $document->proposal_id,
                 'hash' => $document->hash,
+                'original_hash_param' => $hash,
             ]);
             
             // Fallback: Try to proxy from legacy system (beta.jaevee.co.uk)
             $legacyUrl = config('app.legacy_system_url', 'https://beta.jaevee.co.uk');
-            $proxyUrl = $legacyUrl . '/document/investor/' . urlencode($hash);
+            
+            // Use the original hash parameter (not the extracted one) to preserve the exact format
+            $proxyUrl = $legacyUrl . '/document/investor/' . $hash;
             
             try {
-                \Log::info('Attempting to proxy document from legacy system', ['url' => $proxyUrl]);
+                \Log::info('Attempting to proxy document from legacy system', [
+                    'url' => $proxyUrl,
+                    'legacy_url_config' => $legacyUrl,
+                ]);
                 
-                $response = Http::timeout(10)->withoutVerifying()->get($proxyUrl);
+                $response = Http::timeout(15)
+                    ->withoutVerifying()
+                    ->withOptions(['allow_redirects' => true])
+                    ->get($proxyUrl);
+                
+                \Log::info('Legacy system response', [
+                    'status' => $response->status(),
+                    'successful' => $response->successful(),
+                    'headers' => $response->headers(),
+                    'body_size' => strlen($response->body()),
+                ]);
                 
                 if ($response->successful()) {
                     $fileName = ($document->name ?? 'document') . '.pdf';
@@ -357,12 +373,31 @@ class DocumentController extends Controller
                     return response($response->body(), 200, [
                         'Content-Type' => 'application/pdf',
                         'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                        'Cache-Control' => 'public, max-age=3600',
+                    ]);
+                } else {
+                    \Log::warning('Legacy system returned non-success status', [
+                        'status' => $response->status(),
+                        'body_preview' => substr($response->body(), 0, 200),
                     ]);
                 }
+            } catch (\GuzzleHttp\Exception\ConnectException $e) {
+                \Log::error('Connection error when proxying from legacy system', [
+                    'error' => $e->getMessage(),
+                    'url' => $proxyUrl,
+                ]);
+            } catch (\GuzzleHttp\Exception\RequestException $e) {
+                \Log::error('Request error when proxying from legacy system', [
+                    'error' => $e->getMessage(),
+                    'url' => $proxyUrl,
+                    'response' => $e->hasResponse() ? $e->getResponse()->getStatusCode() : 'no response',
+                ]);
             } catch (\Exception $e) {
                 \Log::error('Failed to proxy document from legacy system', [
                     'error' => $e->getMessage(),
+                    'error_type' => get_class($e),
                     'url' => $proxyUrl,
+                    'trace' => $e->getTraceAsString(),
                 ]);
             }
             
@@ -370,9 +405,13 @@ class DocumentController extends Controller
                 'document_id' => $document->id,
                 'proposal_id' => $document->proposal_id,
                 'hash' => $document->hash,
-                'checked_paths' => array_slice($checkedPaths, 0, 5),
+                'original_hash_param' => $hash,
+                'checked_paths_count' => count($checkedPaths),
+                'checked_paths_sample' => array_slice($checkedPaths, 0, 3),
             ]);
-            abort(404, 'Document file not found on server. Document ID: ' . $document->id . ', Hash: ' . substr($document->hash, 0, 20) . '...');
+            
+            // Return a more helpful error message
+            abort(404, 'Document not found. Document ID: ' . $document->id . ' (Hash: ' . substr($document->hash, 0, 20) . '...). The file may not have been generated yet or may be stored in a different location.');
         }
 
         $fileName = ($document->name ?? 'document') . '.pdf';
