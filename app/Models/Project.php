@@ -32,6 +32,33 @@ class Project extends Model
     const STATUS_EXTERNAL             = 90;
     const STATUS_CANCELLED            = 99;
 
+    const STATUS_MAP = [
+        self::STATUS_NOT_SUBMITTED        => 'Not Submitted',
+        self::STATUS_PENDING_REVIEW       => 'Pending Review',
+        self::STATUS_UNDER_REVIEW         => 'Under Review',
+        self::STATUS_VALIDATED            => 'Validated',
+        self::STATUS_RECOMMENDED          => 'Recommended',
+        self::STATUS_AIP_ISSUED           => 'AIP Issued',
+        self::STATUS_AIP_SIGNED           => 'AIP Signed',
+        self::STATUS_REJECTED             => 'Rejected',
+        self::STATUS_PENDING_SET_UP       => 'Pending Set Up',
+        self::STATUS_PENDING_COMPLIANCE   => 'Pending Compliance',
+        self::STATUS_PENDING_EQUITY       => 'Pending Equity',
+        self::STATUS_PENDING_PURCHASE     => 'Pending Purchase',
+        self::STATUS_PENDING_CONSTRUCTION => 'Pending Construction',
+        self::STATUS_UNDER_CONSTRUCTION   => 'Under Construction',
+        self::STATUS_PENDING_SALE         => 'Pending Sale',
+        self::STATUS_PENDING_REMORTGAGE   => 'Pending Remortgage',
+        self::STATUS_PENDING_LET          => 'Pending Let',
+        self::STATUS_ON_MARKET            => 'On The Market',
+        self::STATUS_SOLD_STC             => 'Sold Subject To Contract',
+        self::STATUS_SOLD                 => 'Sold',
+        self::STATUS_LET                  => 'Let',
+        self::STATUS_REMORTGAGED          => 'Remortgaged',
+        self::STATUS_EXTERNAL             => 'External',
+        self::STATUS_CANCELLED            => 'Cancelled',
+    ];
+
     protected $connection = 'legacy';
     protected $table = 'projects';
     public $timestamps = false;
