@@ -104,6 +104,85 @@ Route::get('/document/investor/{hash}', [DocumentController::class, 'investor'])
     ->where('hash', '.*')
     ->name('document.investor');
 
+// Test route to check a specific document hash
+Route::get('/admin/test-document/{hash}', function ($hash) {
+    $hash = urldecode($hash);
+    $hashParts = explode('o', $hash);
+    
+    $authHash = $hashParts[0] ?? '';
+    $timestamp = $hashParts[1] ?? '';
+    $documentHash = implode('o', array_slice($hashParts, 2));
+    
+    // Try to find document
+    $document = \App\Models\ProjectInvestorDocument::where('hash', $documentHash)->first();
+    
+    if (!$document) {
+        // Try partial matches
+        $allDocs = \App\Models\ProjectInvestorDocument::all();
+        foreach ($allDocs as $doc) {
+            if (str_contains($hash, $doc->hash) || str_contains($doc->hash, $documentHash)) {
+                $document = $doc;
+                break;
+            }
+        }
+    }
+    
+    if (!$document) {
+        return response()->json([
+            'error' => 'Document not found in database',
+            'searched_hash' => $documentHash,
+            'all_documents' => \App\Models\ProjectInvestorDocument::select('id', 'proposal_id', 'hash', 'name')->get()->toArray(),
+        ], 404);
+    }
+    
+    // Check file locations
+    $baseDirs = [
+        base_path('../jvsystem/App/Cache/Docs/Investor'),
+        dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor',
+        '/var/www/jvsystem/App/Cache/Docs/Investor',
+        '/home/betajaeveecouk/beta.jaevee.co.uk/App/Cache/Docs/Investor',
+    ];
+    
+    $results = [
+        'document' => [
+            'id' => $document->id,
+            'proposal_id' => $document->proposal_id,
+            'hash' => $document->hash,
+            'name' => $document->name,
+        ],
+        'file_checks' => [],
+    ];
+    
+    foreach ($baseDirs as $baseDir) {
+        if (is_dir($baseDir)) {
+            $proposalDir = $baseDir . '/' . $document->proposal_id;
+            $expectedFile = $proposalDir . '/' . $document->hash . '.pdf';
+            
+            $results['file_checks'][] = [
+                'base_dir' => $baseDir,
+                'exists' => is_dir($baseDir),
+                'proposal_dir' => $proposalDir,
+                'proposal_dir_exists' => is_dir($proposalDir),
+                'expected_file' => $expectedFile,
+                'file_exists' => file_exists($expectedFile),
+                'file_readable' => file_exists($expectedFile) && is_readable($expectedFile),
+            ];
+            
+            if (is_dir($proposalDir)) {
+                $files = glob($proposalDir . '/*.pdf');
+                $results['file_checks'][count($results['file_checks']) - 1]['files_in_dir'] = array_map('basename', $files);
+            }
+        } else {
+            $results['file_checks'][] = [
+                'base_dir' => $baseDir,
+                'exists' => false,
+            ];
+        }
+    }
+    
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+})->middleware('auth:investor')->name('admin.test.document');
+
 // Debug route to check document file locations (admin only)
 Route::get('/admin/debug/document/{documentId}', function ($documentId) {
     $document = \App\Models\ProjectInvestorDocument::find($documentId);

@@ -20,17 +20,22 @@ class DocumentController extends Controller
         $error = false;
         $hashParts = explode('o', $hash);
 
-        if (count($hashParts) !== 3) {
-            // Try alternative separators or check if it's a different format
-            \Log::warning('Document hash format invalid', [
+        // Handle case where there might be more than 3 parts (due to 'o' in the hash itself)
+        if (count($hashParts) < 3) {
+            \Log::warning('Document hash format invalid - not enough parts', [
                 'hash' => $hash, 
                 'parts' => count($hashParts),
                 'parts_array' => $hashParts
             ]);
-            abort(404, 'Invalid document link format. Expected 3 parts separated by "o", got ' . count($hashParts));
+            abort(404, 'Invalid document link format. Expected at least 3 parts separated by "o", got ' . count($hashParts));
         }
 
-        [$authHash, $timestamp, $documentHash] = $hashParts;
+        // The format is: {authHash}o{timestamp}o{documentHash}
+        // But documentHash might contain 'o' characters, so we need to be smarter
+        $authHash = $hashParts[0];
+        $timestamp = $hashParts[1];
+        // Everything after the second 'o' is the document hash
+        $documentHash = implode('o', array_slice($hashParts, 2));
 
         \Log::info('Document hash parsed', [
             'auth_hash' => substr($authHash, 0, 10) . '...',
@@ -71,25 +76,58 @@ class DocumentController extends Controller
         //     abort(404, 'Document link has expired or is invalid');
         // }
 
+        \Log::info('Looking for document', [
+            'extracted_hash' => $documentHash,
+            'hash_length' => strlen($documentHash),
+            'full_url_hash' => $hash,
+        ]);
+        
         // Find the document - try with the extracted hash first
         $document = ProjectInvestorDocument::where('hash', $documentHash)->first();
         
-        // If not found, try finding by the last part of the hash (in case parsing was wrong)
-        if (!$document && strlen($documentHash) > 20) {
-            // The hash might be the full last part, try direct lookup
-            $document = ProjectInvestorDocument::where('hash', 'like', '%' . substr($documentHash, -20) . '%')->first();
+        // If not found, try a partial match (the hash in URL might have extra characters)
+        if (!$document) {
+            // Try matching the beginning of the hash
+            if (strlen($documentHash) > 20) {
+                $partialHash = substr($documentHash, 0, 40); // First 40 chars
+                $document = ProjectInvestorDocument::where('hash', 'like', $partialHash . '%')->first();
+                if ($document) {
+                    \Log::info('Document found by partial hash match (start)', [
+                        'searched' => $partialHash,
+                        'found' => $document->hash,
+                    ]);
+                }
+            }
         }
         
-        // Last resort: try to find by any part of the original hash
+        // If still not found, try finding by the end of the hash
+        if (!$document && strlen($documentHash) > 20) {
+            $endHash = substr($documentHash, -40); // Last 40 chars
+            $document = ProjectInvestorDocument::where('hash', 'like', '%' . $endHash)->first();
+            if ($document) {
+                \Log::info('Document found by partial hash match (end)', [
+                    'searched' => $endHash,
+                    'found' => $document->hash,
+                ]);
+            }
+        }
+        
+        // Last resort: try to find by searching all hashes in the database
         if (!$document) {
-            $allHashes = ProjectInvestorDocument::pluck('hash')->toArray();
-            foreach ($allHashes as $dbHash) {
-                if (str_contains($hash, $dbHash) || str_contains($dbHash, $documentHash)) {
-                    $document = ProjectInvestorDocument::where('hash', $dbHash)->first();
-                    if ($document) {
-                        \Log::info('Document found by hash matching', ['original' => $documentHash, 'found' => $dbHash]);
-                        break;
-                    }
+            \Log::info('Searching all documents for hash match');
+            $allDocuments = ProjectInvestorDocument::all();
+            foreach ($allDocuments as $doc) {
+                // Check if the URL hash contains the DB hash or vice versa
+                if (str_contains($hash, $doc->hash) || 
+                    str_contains($doc->hash, $documentHash) ||
+                    str_contains($documentHash, $doc->hash)) {
+                    $document = $doc;
+                    \Log::info('Document found by hash substring matching', [
+                        'searched' => $documentHash,
+                        'found' => $doc->hash,
+                        'document_id' => $doc->id,
+                    ]);
+                    break;
                 }
             }
         }
