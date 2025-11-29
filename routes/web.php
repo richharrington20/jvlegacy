@@ -100,11 +100,17 @@ Route::get('/create-admin-account', function () {
     $password = 'password123';
     
     // Check if account already exists
-    if (\App\Models\Account::where('email', $email)->exists()) {
+    $existingAccount = \App\Models\Account::where('email', $email)->first();
+    if ($existingAccount) {
         return response()->json([
-            'error' => 'Account already exists',
+            'success' => true,
+            'message' => 'Account already exists',
             'email' => $email,
-        ], 400);
+            'account_id' => $existingAccount->id,
+            'type_id' => $existingAccount->type_id,
+            'login_url' => url('/investor/login'),
+            'note' => 'If you need to reset the password or change type, use the admin panel.',
+        ]);
     }
     
     // Split name
@@ -112,12 +118,21 @@ Route::get('/create-admin-account', function () {
     $firstName = $nameParts[0];
     $lastName = $nameParts[1] ?? '';
     
-    // Create person record
-    $person = \App\Models\Person::create([
-        'first_name' => $firstName,
-        'last_name' => $lastName,
-        'email' => $email,
-    ]);
+    // Check if person already exists, if not create one
+    $person = \App\Models\Person::where('email', $email)
+        ->where('first_name', $firstName)
+        ->where('last_name', $lastName)
+        ->first();
+    
+    if (!$person) {
+        // Create person record with a unique telephone_number to avoid constraint violation
+        $person = \App\Models\Person::create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $email,
+            'telephone_number' => 'admin-' . time(), // Unique value to avoid constraint violation
+        ]);
+    }
     
     // Create account with GUARDIAN type (type_id = 2) for global admin access
     $account = \App\Models\Account::create([
@@ -135,6 +150,7 @@ Route::get('/create-admin-account', function () {
         'password' => $password,
         'type' => 'GUARDIAN (Global Admin)',
         'account_id' => $account->id,
+        'person_id' => $person->id,
         'login_url' => url('/investor/login'),
     ]);
 })->name('create.admin.account');
