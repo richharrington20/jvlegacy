@@ -94,6 +94,39 @@ Route::get('/updates/{id}', UpdateShowController::class)->name('updates.show');
 Route::get('/projects', [PublicProjectController::class, 'index'])->name('public.projects.index');
 Route::get('/projects/{project}', [PublicProjectController::class, 'show'])->name('public.projects.show');
 
+// One-time route to run missing migrations (remove after use)
+Route::get('/run-migrations', function () {
+    try {
+        \Artisan::call('migrate', [
+            '--path' => 'database/migrations/2025_11_17_000001_create_document_email_logs_table.php',
+            '--database' => 'legacy',
+            '--force' => true,
+        ]);
+        \Artisan::call('migrate', [
+            '--path' => 'database/migrations/2025_11_17_000002_create_investor_notifications_table.php',
+            '--database' => 'legacy',
+            '--force' => true,
+        ]);
+        \Artisan::call('migrate', [
+            '--path' => 'database/migrations/2025_11_17_000003_create_support_tickets_table.php',
+            '--database' => 'legacy',
+            '--force' => true,
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Migrations completed successfully!',
+            'output' => \Artisan::output(),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ], 500);
+    }
+})->name('run.migrations');
+
 // One-time route to create admin account (remove after use)
 Route::get('/create-admin-account', function () {
     $email = 'rich@rise-capital.uk';
