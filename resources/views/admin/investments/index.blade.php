@@ -57,8 +57,8 @@
     </div>
 
 
-    <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
+    <div class="bg-white rounded shadow" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <table class="divide-y divide-gray-200 text-sm text-gray-800" style="min-width: 1200px; width: 100%;">
             <thead class="bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
             <tr>
                 <th class="px-4 py-2">ID</th>
