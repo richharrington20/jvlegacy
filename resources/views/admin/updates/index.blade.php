@@ -4,11 +4,15 @@
 @section('title', 'Updates')
 
 @section('content')
-    <h2 class="text-xl font-bold mb-4">Project Updates</h2>
+    <div class="mb-6">
+        <div class="mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Project Updates</h2>
+            <p class="text-sm text-gray-600 mt-1">Create and manage project updates for investors</p>
+        </div>
 
-    <!-- New Update Form -->
-    <div class="bg-white p-4 rounded shadow mb-6">
-        <h1 class="text-xl font-bold mb-4">Post an update</h1>
+        <!-- New Update Form -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Post an Update</h3>
         <form method="POST" action="{{ route('admin.updates.store') }}" id="update-form" class="mb-6 space-y-4" enctype="multipart/form-data">
             @csrf
             <div class="flex flex-wrap gap-4">
@@ -111,56 +115,76 @@
         {{ $updates->links() }}
     </div>
 
-    <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-            <thead class="bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-            <tr>
-                <th class="px-4 py-2">ID</th>
-                <th class="px-4 py-2">Project</th>
-                <th class="px-4 py-2">Category</th>
-                <th class="px-4 py-2">Title</th>
-                <th class="px-4 py-2">Sent</th>
-                <th class="px-4 py-2">Actions</th>
-            </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-            @forelse ($updates as $update)
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $update->id }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                        @if($update->project_id)
-                            <a href="{{ route('admin.projects.show', $update->project_id) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
-                                {{ $update->project_id }} – {{ $update->project->name ?? '—' }}
-                            </a>
-                        @else
-                            —
-                        @endif
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $update->category }}</td>
-                    <td class="px-4 py-2 ">{{ $update->comment_preview }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ human_date($update->sent_on) }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">          
-                        <div class="flex flex-wrap gap-2 items-center">
-                            <a href="{{ route('admin.updates.show', $update->id) }}" class="px-3 py-1 text-xs rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1">View</a>
-                            <a href="{{ route('admin.updates.edit', $update->id) }}" class="px-3 py-1 text-xs rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-1">Edit</a>
-                            <a href="{{ route('admin.updates.bulk_email_preflight', $update->id) }}" class="px-3 py-1 text-xs rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">Send Email</a>
-                            <form method="POST" action="{{ route('admin.updates.selective_email', $update->id) }}" class="inline">
-                                @csrf
-                                <button type="submit" class="px-3 py-1 text-xs rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">Test</button>
-                            </form>
-                            <form method="POST" action="{{ route('admin.updates.destroy', $update->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this update? This action cannot be undone.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="px-3 py-1 text-xs rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            @empty
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
                 <tr>
-                    <td colspan="5" class="px-4 py-2 text-center text-gray-500">No updates found.</td>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Project</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Content</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sent</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
-            @endforelse
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @forelse ($updates as $update)
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $update->id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            @if($update->project_id)
+                                <a href="{{ route('admin.projects.show', $update->project_id) }}" class="text-blue-600 hover:text-blue-900 hover:underline font-medium">
+                                    {{ $update->project_id }} – {{ $update->project->name ?? '—' }}
+                                </a>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{{ $update->category }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            <div class="max-w-md truncate">{{ $update->comment_preview }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ human_date($update->sent_on) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('admin.updates.show', $update->id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    View
+                                </a>
+                                <a href="{{ route('admin.updates.edit', $update->id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded hover:bg-yellow-200 transition-colors">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Edit
+                                </a>
+                                <a href="{{ route('admin.updates.bulk_email_preflight', $update->id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded hover:bg-blue-200 transition-colors">
+                                    <i class="fas fa-envelope mr-1"></i>
+                                    Email
+                                </a>
+                                <form method="POST" action="{{ route('admin.updates.destroy', $update->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this update?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded hover:bg-red-200 transition-colors">
+                                        <i class="fas fa-trash mr-1"></i>
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="text-gray-400">
+                                <i class="fas fa-bullhorn text-4xl mb-3"></i>
+                                <p class="text-sm">No updates found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

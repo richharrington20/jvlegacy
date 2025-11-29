@@ -4,8 +4,8 @@
 
 
 @section('content')
-<div class="mx-auto py-10">
-    <div class="bg-white shadow rounded-lg p-4 mb-8 w-full">
+<div class="space-y-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-2xl font-bold">Account Details</h1>
             <button onclick="document.getElementById('edit-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -85,8 +85,8 @@
         </form>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-4 mb-8 w-full mt-8">
-        <h2 class="text-lg font-semibold mb-2">Admin Actions</h2>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h2>
         
         <div class="mb-4 pb-4 border-b border-gray-200">
             <form action="{{ route('admin.accounts.masquerade', $account->id) }}" method="POST" class="inline">
@@ -120,8 +120,8 @@
         @endif
     </div>
 
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-bold mb-4">Investment Portfolio</h2>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Investment Portfolio</h2>
         
         @if($projectInvestments->isEmpty())
             <div class="text-center py-12 px-4">

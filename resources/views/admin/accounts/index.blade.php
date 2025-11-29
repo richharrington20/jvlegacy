@@ -3,8 +3,11 @@
 @section('title', 'Accounts')
 
 @section('content')
-<div class="container mx-auto px-4 ">
-    <h1 class="text-2xl font-bold mb-4">Accounts</h1>
+<div class="mb-6">
+    <div class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-900">Accounts</h1>
+        <p class="text-sm text-gray-600 mt-1">Manage investor and company accounts</p>
+    </div>
     <form method="GET" class="mb-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4">
         <input type="text" name="search" id="search" placeholder="Search by company name"
                value="{{ request('search') }}"
@@ -28,41 +31,46 @@
     <div class="mt-4">
         {{ $accounts->links() }}
     </div>
-    <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-            <thead class="bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-            <tr>
-                <th class="px-4 py-2">ID</th>
-                <th class="px-4 py-2">Name</th>
-                <th class="px-4 py-2">Type</th>
-                <th class="px-4 py-2">Total Paid</th>
-                <th class="px-4 py-2">Total Unpaid</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            @foreach ($accounts as $account)
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $account->id }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">
-                        <a href="{{ route('admin.accounts.show', $account->id) }}" class="text-blue-600 hover:underline">
-                            {{ $account->name }}
-                        </a>
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $account->type_name }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $account->total_paid }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $account->total_unpaid }}</td>
-                    <td>
-                        <form action="{{ route('admin.accounts.masquerade', $account->id) }}" method="POST" onsubmit="return confirm('Masquerade as this user?')">
-                            @csrf
-                            <button type="submit" class="text-sm text-blue-600 hover:underline">Masquerade</button>
-                        </form>
-                    </td>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Paid</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Unpaid</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
-
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach ($accounts as $account)
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $account->id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="{{ route('admin.accounts.show', $account->id) }}" class="text-blue-600 hover:text-blue-900 hover:underline font-medium">
+                                {{ $account->name }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{{ $account->type_name }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">{{ $account->total_paid }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">{{ $account->total_unpaid }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <form action="{{ route('admin.accounts.masquerade', $account->id) }}" method="POST" class="inline" onsubmit="return confirm('Masquerade as this user?');">
+                                @csrf
+                                <button type="submit" class="text-blue-600 hover:text-blue-900 hover:underline font-medium">
+                                    <i class="fas fa-user-secret mr-1"></i>
+                                    Masquerade
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 </div>
     <div class="mt-4">
         {{ $accounts->links() }}

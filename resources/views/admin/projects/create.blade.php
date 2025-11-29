@@ -7,9 +7,12 @@
         <a href="{{ route('admin.projects.index') }}" class="text-blue-600 hover:text-blue-800">← Back to Projects</a>
     </div>
 
-    <h2 class="text-xl font-bold mb-4">Create New Project</h2>
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Create New Project</h2>
+        <p class="text-sm text-gray-600 mt-1">Add a new investment project to the system</p>
+    </div>
 
-    <div class="bg-white p-6 rounded shadow">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <form method="POST" action="{{ route('admin.projects.store') }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
 

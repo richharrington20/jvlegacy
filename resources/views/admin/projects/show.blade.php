@@ -4,10 +4,13 @@
 
 @section('content')
     <div class="mb-4">
-        <a href="{{ route('admin.investments.index') }}" class="text-blue-600 hover:text-blue-800">← Back to Investments</a>
+        <a href="{{ route('admin.projects.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-900 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Projects
+        </a>
     </div>
 
-    <div class="bg-white rounded shadow p-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">{{ $project->name }}</h1>
@@ -30,7 +33,7 @@
     @endif
 
     <!-- Investors Section -->
-    <div class="bg-white rounded shadow p-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-gray-900">Investors ({{ $investors->count() }})</h2>
         </div>

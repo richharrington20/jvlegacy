@@ -3,9 +3,19 @@
 @section('title', 'Create Investment')
 
 @section('content')
-    <h2 class="text-xl font-bold mb-4">Create New Investment</h2>
+    <div class="mb-4">
+        <a href="{{ route('admin.investments.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-900 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Investments
+        </a>
+    </div>
 
-    <div class="bg-white p-6 rounded shadow">
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Create New Investment</h2>
+        <p class="text-sm text-gray-600 mt-1">Add a new investment record for an investor</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <form method="POST" action="{{ route('admin.investments.store') }}" class="space-y-4">
             @csrf
 

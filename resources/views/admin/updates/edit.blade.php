@@ -4,11 +4,18 @@
 
 @section('content')
     <div class="mb-4">
-        <a href="{{ route('admin.updates.index') }}" class="text-blue-600 hover:text-blue-800">← Back to Updates</a>
+        <a href="{{ route('admin.updates.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-900 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Updates
+        </a>
     </div>
 
-    <div class="bg-white rounded shadow p-6">
-        <h2 class="text-2xl font-bold mb-6">Edit Update #{{ $update->id }}</h2>
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Edit Update #{{ $update->id }}</h2>
+        <p class="text-sm text-gray-600 mt-1">Modify project update content and details</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
 
         <form method="POST" action="{{ route('admin.updates.update', $update->id) }}" id="update-form" class="space-y-4" enctype="multipart/form-data">
             @csrf

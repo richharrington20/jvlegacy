@@ -3,9 +3,19 @@
 @section('title', 'Edit Investment')
 
 @section('content')
-    <h2 class="text-xl font-bold mb-4">Edit Investment #{{ $investment->id }}</h2>
+    <div class="mb-4">
+        <a href="{{ route('admin.investments.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-900 font-medium">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Investments
+        </a>
+    </div>
 
-    <div class="bg-white p-6 rounded shadow">
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Edit Investment #{{ $investment->id }}</h2>
+        <p class="text-sm text-gray-600 mt-1">Update investment details</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <form method="POST" action="{{ route('admin.investments.update', $investment->id) }}" class="space-y-4">
             @csrf
             @method('PUT')
