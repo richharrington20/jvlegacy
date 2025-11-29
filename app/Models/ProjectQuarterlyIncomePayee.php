@@ -14,7 +14,7 @@ class ProjectQuarterlyIncomePayee extends Model
         'paid_on' => 'datetime',
     ];
 
-    public function update()
+    public function quarterlyUpdate()
     {
         return $this->belongsTo(ProjectQuarterlyIncomeUpdate::class, 'quarterly_update_id');
     }

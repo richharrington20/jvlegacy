@@ -219,7 +219,7 @@
                             <tbody>
                                 @foreach($payouts as $payout)
                                     <tr>
-                                        <td class="px-4 py-2 whitespace-nowrap">{{ optional($payout->update)->due_on ? $payout->update->due_on->format('d M Y') : '—' }}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap">{{ optional($payout->quarterlyUpdate)->due_on ? $payout->quarterlyUpdate->due_on->format('d M Y') : '—' }}</td>
                                         <td class="px-4 py-2">{!! money($payout->amount ?? 0) !!}</td>
                                         <td class="px-4 py-2">
                                             @if($payout->paid)

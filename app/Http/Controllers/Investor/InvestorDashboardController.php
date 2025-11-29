@@ -49,9 +49,9 @@ class InvestorDashboardController extends Controller
                     ->limit(10)
                     ->get();
 
-                $payouts = ProjectQuarterlyIncomePayee::with('update')
+                $payouts = ProjectQuarterlyIncomePayee::with('quarterlyUpdate')
                     ->where('account_id', $account->id)
-                    ->whereHas('update', function ($query) use ($project) {
+                    ->whereHas('quarterlyUpdate', function ($query) use ($project) {
                         $query->where('project_id', $project->id);
                     })
                     ->orderByDesc('paid_on')
