@@ -106,61 +106,115 @@ Route::get('/document/investor/{hash}', [DocumentController::class, 'investor'])
 
 // Route to find where documents are actually stored
 Route::get('/admin/find-docs-directory', function () {
-    $searchDirs = [
-        base_path('..'),
-        dirname(base_path()),
-        '/home/forge',
-        '/var/www',
-        '/home',
+    $results = [
+        'current_base_path' => base_path(),
+        'current_dir' => dirname(base_path()),
+        'realpath_base' => realpath(base_path()),
+        'realpath_current_dir' => realpath(dirname(base_path())),
+        'checked_dirs' => [],
+        'found_dirs' => [],
+        'symlinks' => [],
+        'proposal_dirs_found' => [],
     ];
     
-    $foundDirs = [];
-    $checkedDirs = [];
+    // Check for symlinks
+    $possibleSymlinks = [
+        base_path('../jvsystem'),
+        dirname(base_path()) . '/jvsystem',
+        '/home/forge/jvsystem',
+    ];
     
-    foreach ($searchDirs as $searchDir) {
-        if (!is_dir($searchDir)) {
-            $checkedDirs[] = ['path' => $searchDir, 'exists' => false];
+    foreach ($possibleSymlinks as $link) {
+        if (file_exists($link)) {
+            $realpath = realpath($link);
+            $isLink = is_link($link);
+            $results['symlinks'][] = [
+                'path' => $link,
+                'realpath' => $realpath,
+                'is_symlink' => $isLink,
+                'exists' => file_exists($link),
+                'is_dir' => is_dir($link),
+            ];
+            
+            if ($realpath && is_dir($realpath)) {
+                $docsPath = $realpath . '/App/Cache/Docs/Investor';
+                if (is_dir($docsPath)) {
+                    $results['found_dirs'][] = [
+                        'path' => $docsPath,
+                        'source' => 'symlink_resolution',
+                        'readable' => is_readable($docsPath),
+                    ];
+                }
+            }
+        }
+    }
+    
+    // Check specific proposal_id directory (2436) in various locations
+    $proposalId = 2436;
+    $testPaths = [
+        base_path('../jvsystem/App/Cache/Docs/Investor/' . $proposalId),
+        dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor/' . $proposalId,
+        '/home/forge/jvsystem/App/Cache/Docs/Investor/' . $proposalId,
+        '/home/forge/beta.jaevee.co.uk/App/Cache/Docs/Investor/' . $proposalId,
+        '/var/www/jvsystem/App/Cache/Docs/Investor/' . $proposalId,
+        '/home/betajaeveecouk/beta.jaevee.co.uk/App/Cache/Docs/Investor/' . $proposalId,
+    ];
+    
+    foreach ($testPaths as $testPath) {
+        $baseDir = dirname($testPath);
+        $results['checked_dirs'][] = [
+            'base_dir' => $baseDir,
+            'base_exists' => is_dir($baseDir),
+            'proposal_dir' => $testPath,
+            'proposal_exists' => is_dir($testPath),
+        ];
+        
+        if (is_dir($testPath)) {
+            $files = glob($testPath . '/*.pdf');
+            $results['proposal_dirs_found'][] = [
+                'path' => $testPath,
+                'file_count' => count($files),
+                'files' => array_map('basename', $files),
+            ];
+        }
+    }
+    
+    // Quick scan of common parent directories (non-recursive to avoid timeout)
+    $quickScanDirs = [
+        '/home/forge',
+        '/var/www',
+        dirname(base_path()),
+    ];
+    
+    foreach ($quickScanDirs as $scanDir) {
+        if (!is_dir($scanDir) || !is_readable($scanDir)) {
             continue;
         }
         
-        $checkedDirs[] = ['path' => $searchDir, 'exists' => true, 'readable' => is_readable($searchDir)];
-        
         try {
-            // Look for jvsystem directories
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($searchDir, \RecursiveDirectoryIterator::SKIP_DOTS),
-                \RecursiveIteratorIterator::SELF_FIRST
-            );
-            
-            $count = 0;
-            foreach ($iterator as $file) {
-                if ($file->isDir()) {
-                    $path = $file->getPathname();
-                    
-                    // Look for Cache/Docs/Investor pattern
-                    if (str_contains($path, 'Cache/Docs/Investor') || str_contains($path, 'jvsystem')) {
-                        $foundDirs[] = [
-                            'path' => $path,
-                            'is_docs_dir' => str_contains($path, 'Cache/Docs/Investor'),
-                            'is_jvsystem' => str_contains($path, 'jvsystem'),
+            $entries = scandir($scanDir);
+            foreach ($entries as $entry) {
+                if ($entry === '.' || $entry === '..') continue;
+                
+                $fullPath = $scanDir . '/' . $entry;
+                if (is_dir($fullPath) && (str_contains($entry, 'jvsystem') || str_contains($entry, 'jaevee'))) {
+                    $docsPath = $fullPath . '/App/Cache/Docs/Investor';
+                    if (is_dir($docsPath)) {
+                        $results['found_dirs'][] = [
+                            'path' => $docsPath,
+                            'source' => 'quick_scan',
+                            'readable' => is_readable($docsPath),
+                            'proposal_2436_exists' => is_dir($docsPath . '/2436'),
                         ];
-                        $count++;
-                        if ($count > 20) break; // Limit to avoid timeout
                     }
                 }
             }
         } catch (\Exception $e) {
-            // Skip directories we can't access
-            continue;
+            // Skip
         }
     }
     
-    return response()->json([
-        'current_base_path' => base_path(),
-        'current_dir' => dirname(base_path()),
-        'checked_dirs' => $checkedDirs,
-        'found_dirs' => $foundDirs,
-    ], 200, [], JSON_PRETTY_PRINT);
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
 })->middleware('auth:investor')->name('admin.find.docs.directory');
 
 // Test route to check a specific document hash
