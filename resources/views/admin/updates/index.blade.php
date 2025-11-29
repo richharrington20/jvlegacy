@@ -127,7 +127,15 @@
             @forelse ($updates as $update)
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-2 whitespace-nowrap">{{ $update->id }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $update->project_id }} – {{ $update->project->name ?? '—' }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        @if($update->project_id)
+                            <a href="{{ route('admin.projects.show', $update->project_id) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                {{ $update->project_id }} – {{ $update->project->name ?? '—' }}
+                            </a>
+                        @else
+                            —
+                        @endif
+                    </td>
                     <td class="px-4 py-2 whitespace-nowrap">{{ $update->category }}</td>
                     <td class="px-4 py-2 ">{{ $update->comment_preview }}</td>
                     <td class="px-4 py-2 whitespace-nowrap">{{ human_date($update->sent_on) }}</td>
