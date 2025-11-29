@@ -145,7 +145,7 @@ class DocumentController extends Controller
         // The legacy system stores files at: /App/Cache/Docs/Investor/{proposal_id}/{hash}.pdf
         $legacyBasePath = config('app.legacy_docs_path');
         
-        // Build possible paths
+        // Build possible paths - based on Forge server structure
         $possiblePaths = [];
         
         // If config path is set, use it first
@@ -153,22 +153,53 @@ class DocumentController extends Controller
             $possiblePaths[] = rtrim($legacyBasePath, '/') . '/' . $document->proposal_id . '/' . $document->hash . '.pdf';
         }
         
-        // Try common legacy system locations
+        // Get base path for current Laravel app
+        $currentBase = base_path();
+        $currentDir = dirname($currentBase);
+        
+        // Try common legacy system locations (Forge server structure)
         $possiblePaths = array_merge($possiblePaths, [
-            // Relative to Laravel base path
+            // Relative to Laravel base path (if jvsystem is sibling)
             base_path('../jvsystem/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf'),
             // Absolute path if jvsystem is in parent directory
             dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf',
-            // Alternative: might be in a shared location (common server paths)
+            // Forge server: might be in shared directory or sibling site
+            '/home/forge/jvsystem/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf',
+            '/home/forge/beta.jaevee.co.uk/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf',
+            // Alternative server paths
             '/var/www/jvsystem/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf',
             '/home/betajaeveecouk/beta.jaevee.co.uk/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf',
-            '/home/*/jvsystem/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf',
             // If stored in Laravel storage
             storage_path('app/documents/investor/' . $document->proposal_id . '/' . $document->hash . '.pdf'),
             // Try with id instead of proposal_id
             base_path('../jvsystem/App/Cache/Docs/Investor/' . $document->id . '/' . $document->hash . '.pdf'),
             dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor/' . $document->id . '/' . $document->hash . '.pdf',
+            '/home/forge/jvsystem/App/Cache/Docs/Investor/' . $document->id . '/' . $document->hash . '.pdf',
         ]);
+        
+        // Try to find jvsystem directory by scanning common parent directories
+        $parentDirsToCheck = [
+            dirname($currentBase),
+            dirname(dirname($currentBase)),
+            '/home/forge',
+            '/var/www',
+        ];
+        
+        foreach ($parentDirsToCheck as $parentDir) {
+            if (is_dir($parentDir)) {
+                // Look for jvsystem directory
+                $jvsystemDirs = glob($parentDir . '/*/jvsystem', GLOB_ONLYDIR);
+                foreach ($jvsystemDirs as $jvsystemDir) {
+                    $possiblePaths[] = $jvsystemDir . '/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf';
+                }
+                
+                // Also check if jvsystem is directly in parent
+                $directJvsystem = $parentDir . '/jvsystem';
+                if (is_dir($directJvsystem)) {
+                    $possiblePaths[] = $directJvsystem . '/App/Cache/Docs/Investor/' . $document->proposal_id . '/' . $document->hash . '.pdf';
+                }
+            }
+        }
 
         $filePath = null;
         $checkedPaths = [];

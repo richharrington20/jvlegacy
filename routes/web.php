@@ -104,6 +104,65 @@ Route::get('/document/investor/{hash}', [DocumentController::class, 'investor'])
     ->where('hash', '.*')
     ->name('document.investor');
 
+// Route to find where documents are actually stored
+Route::get('/admin/find-docs-directory', function () {
+    $searchDirs = [
+        base_path('..'),
+        dirname(base_path()),
+        '/home/forge',
+        '/var/www',
+        '/home',
+    ];
+    
+    $foundDirs = [];
+    $checkedDirs = [];
+    
+    foreach ($searchDirs as $searchDir) {
+        if (!is_dir($searchDir)) {
+            $checkedDirs[] = ['path' => $searchDir, 'exists' => false];
+            continue;
+        }
+        
+        $checkedDirs[] = ['path' => $searchDir, 'exists' => true, 'readable' => is_readable($searchDir)];
+        
+        try {
+            // Look for jvsystem directories
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($searchDir, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::SELF_FIRST
+            );
+            
+            $count = 0;
+            foreach ($iterator as $file) {
+                if ($file->isDir()) {
+                    $path = $file->getPathname();
+                    
+                    // Look for Cache/Docs/Investor pattern
+                    if (str_contains($path, 'Cache/Docs/Investor') || str_contains($path, 'jvsystem')) {
+                        $foundDirs[] = [
+                            'path' => $path,
+                            'is_docs_dir' => str_contains($path, 'Cache/Docs/Investor'),
+                            'is_jvsystem' => str_contains($path, 'jvsystem'),
+                        ];
+                        $count++;
+                        if ($count > 20) break; // Limit to avoid timeout
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Skip directories we can't access
+            continue;
+        }
+    }
+    
+    return response()->json([
+        'current_base_path' => base_path(),
+        'current_dir' => dirname(base_path()),
+        'checked_dirs' => $checkedDirs,
+        'found_dirs' => $foundDirs,
+    ], 200, [], JSON_PRETTY_PRINT);
+})->middleware('auth:investor')->name('admin.find.docs.directory');
+
 // Test route to check a specific document hash
 Route::get('/admin/test-document/{hash}', function ($hash) {
     $hash = urldecode($hash);
@@ -135,13 +194,31 @@ Route::get('/admin/test-document/{hash}', function ($hash) {
         ], 404);
     }
     
-    // Check file locations
+    // Check file locations - expanded list
     $baseDirs = [
         base_path('../jvsystem/App/Cache/Docs/Investor'),
         dirname(base_path()) . '/jvsystem/App/Cache/Docs/Investor',
+        '/home/forge/jvsystem/App/Cache/Docs/Investor',
+        '/home/forge/beta.jaevee.co.uk/App/Cache/Docs/Investor',
         '/var/www/jvsystem/App/Cache/Docs/Investor',
         '/home/betajaeveecouk/beta.jaevee.co.uk/App/Cache/Docs/Investor',
+        storage_path('app/documents/investor'),
     ];
+    
+    // Also check for jvsystem in parent directories
+    $parentDirs = [dirname(base_path()), dirname(dirname(base_path())), '/home/forge'];
+    foreach ($parentDirs as $parentDir) {
+        if (is_dir($parentDir)) {
+            $jvsystemDirs = glob($parentDir . '/*/jvsystem', GLOB_ONLYDIR);
+            foreach ($jvsystemDirs as $jvsystemDir) {
+                $baseDirs[] = $jvsystemDir . '/App/Cache/Docs/Investor';
+            }
+            // Check if jvsystem is directly in parent
+            if (is_dir($parentDir . '/jvsystem')) {
+                $baseDirs[] = $parentDir . '/jvsystem/App/Cache/Docs/Investor';
+            }
+        }
+    }
     
     $results = [
         'document' => [
@@ -158,7 +235,7 @@ Route::get('/admin/test-document/{hash}', function ($hash) {
             $proposalDir = $baseDir . '/' . $document->proposal_id;
             $expectedFile = $proposalDir . '/' . $document->hash . '.pdf';
             
-            $results['file_checks'][] = [
+            $check = [
                 'base_dir' => $baseDir,
                 'exists' => is_dir($baseDir),
                 'proposal_dir' => $proposalDir,
@@ -170,8 +247,11 @@ Route::get('/admin/test-document/{hash}', function ($hash) {
             
             if (is_dir($proposalDir)) {
                 $files = glob($proposalDir . '/*.pdf');
-                $results['file_checks'][count($results['file_checks']) - 1]['files_in_dir'] = array_map('basename', $files);
+                $check['files_in_dir'] = array_map('basename', $files);
+                $check['file_count'] = count($files);
             }
+            
+            $results['file_checks'][] = $check;
         } else {
             $results['file_checks'][] = [
                 'base_dir' => $baseDir,
