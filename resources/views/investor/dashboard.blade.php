@@ -120,12 +120,16 @@
                                     {{ $inv->type_label }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div class="flex flex-wrap gap-2">
+                                    <div class="flex flex-wrap gap-3 items-center">
                                         @forelse($documents as $document)
                                             <a href="{{ $document->url }}"
                                                target="_blank"
-                                               class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded bg-purple-600 text-white hover:bg-purple-700">
-                                                {{ $document->name ?? 'Download' }}
+                                               class="inline-flex flex-col items-center justify-center group"
+                                               title="{{ $document->name ?? 'Download document' }}">
+                                                <i class="{{ $document->icon }} text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
+                                                <span class="text-xs text-gray-600 group-hover:text-gray-900 text-center max-w-[80px] truncate">
+                                                    {{ $document->name ?? 'Document' }}
+                                                </span>
                                             </a>
                                         @empty
                                             <span class="text-gray-400">No documents yet</span>

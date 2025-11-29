@@ -36,6 +36,30 @@ class ProjectInvestorDocument extends Model
             $this->hash
         );
     }
+
+    /**
+     * Get the icon class for this document type
+     */
+    public function getIconAttribute(): string
+    {
+        $name = strtolower($this->name ?? '');
+        
+        // Map document names/types to Font Awesome icons
+        if (str_contains($name, 'shareholder')) {
+            return 'fas fa-file-contract text-blue-600';
+        } elseif (str_contains($name, 'loan')) {
+            return 'fas fa-file-signature text-green-600';
+        } elseif (str_contains($name, 'certificate') || str_contains($name, 'cert')) {
+            return 'fas fa-certificate text-yellow-600';
+        } elseif (str_contains($name, 'statement')) {
+            return 'fas fa-file-invoice text-purple-600';
+        } elseif (str_contains($name, 'agreement')) {
+            return 'fas fa-handshake text-indigo-600';
+        } else {
+            // Default PDF icon
+            return 'far fa-file-pdf text-red-600';
+        }
+    }
 }
 
 
