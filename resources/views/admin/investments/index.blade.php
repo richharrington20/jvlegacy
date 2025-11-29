@@ -5,18 +5,18 @@
 
 @section('content')
     <div class="mb-6">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-6">
             <div>
-                <h2 class="text-2xl font-bold text-gray-900">Investments</h2>
-                <p class="text-sm text-gray-600 mt-1">Manage and track all investment records</p>
+                <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Investments</h2>
+                <p class="text-sm text-gray-500 mt-1.5">Manage and track all investment records</p>
             </div>
-            <a href="{{ route('admin.investments.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+            <a href="{{ route('admin.investments.create') }}" class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-sm hover:shadow-md">
                 <i class="fas fa-plus mr-2"></i>
                 Create Investment
             </a>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <form method="GET" class="mb-4 flex flex-wrap gap-4 items-end">
 
             <div class="w-full md:w-48">

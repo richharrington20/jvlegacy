@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard – @yield('title')</title>
 
+    <!-- Google Fonts - Inter (modern, clean font used in professional admin templates) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     @vite('resources/css/app.css')
 
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -16,14 +21,14 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvZOOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdgNs3Y/WjMd0FDhL/g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-30">
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-30 shadow-sm">
             <!-- Logo -->
-            <div class="h-16 flex items-center px-6 border-b border-gray-200">
+            <div class="h-16 flex items-center px-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
                 <img src="{{asset('logo.png')}}" alt="Logo" class="h-8 mr-2">
-                <span class="text-lg font-bold text-gray-900">JaeVee System</span>
+                <span class="text-lg font-bold text-gray-900 tracking-tight">JaeVee System</span>
             </div>
 
             <!-- Navigation -->
@@ -90,9 +95,9 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden ml-64">
             <!-- Top Header -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-20 shadow-sm">
                 <div class="flex items-center">
-                    <h1 class="text-xl font-semibold text-gray-900">@yield('title', 'Dashboard')</h1>
+                    <h1 class="text-xl font-semibold text-gray-900 tracking-tight">@yield('title', 'Dashboard')</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     @if (session()->has('masquerading_from_admin'))
