@@ -55,7 +55,7 @@
                     <td>
                         <form action="{{ route('admin.accounts.masquerade', $account->id) }}" method="POST" onsubmit="return confirm('Masquerade as this user?')">
                             @csrf
-                            <button type="submit" class="text-sm text-blue-600 hover:underline">👤 Masquerade</button>
+                            <button type="submit" class="text-sm text-blue-600 hover:underline">Masquerade</button>
                         </form>
                     </td>
                 </tr>

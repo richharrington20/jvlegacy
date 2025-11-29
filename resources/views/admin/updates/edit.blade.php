@@ -10,7 +10,7 @@
     <div class="bg-white rounded shadow p-6">
         <h2 class="text-2xl font-bold mb-6">Edit Update #{{ $update->id }}</h2>
 
-        <form method="POST" action="{{ route('admin.updates.update', $update->id) }}" id="update-form" class="space-y-4">
+        <form method="POST" action="{{ route('admin.updates.update', $update->id) }}" id="update-form" class="space-y-4" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -38,6 +38,17 @@
                 <label class="block text-sm font-medium mb-1">Update Content <span class="text-red-500">*</span></label>
                 <div id="quill-editor" class="bg-white border border-gray-300 rounded" style="min-height: 200px;">{!! $update->comment !!}</div>
                 <input type="hidden" name="comment" id="comment-input" value="{{ $update->comment }}">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Image (optional)</label>
+                <input type="file" name="image" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="text-xs text-gray-500 mt-1">Upload an image to include in the update (JPG, PNG, GIF). Leave blank to keep existing image.</p>
+                @if($update->image_path ?? false)
+                    <div class="mt-2">
+                        <p class="text-xs text-gray-600">Current image:</p>
+                        <img src="{{ $update->image_path }}" alt="Update image" class="mt-1 max-w-xs rounded">
+                    </div>
+                @endif
             </div>
 
             <div class="flex gap-2">

@@ -81,4 +81,43 @@ class AccountController extends Controller
         $account->save();
         return redirect()->back()->with('status', 'Password updated!');
     }
+
+    public function update(Request $request, $id)
+    {
+        $account = Account::on('legacy')->with('person', 'company')->findOrFail($id);
+        
+        $request->validate([
+            'email' => 'required|email|unique:legacy.accounts,email,' . $id,
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'telephone_number' => 'nullable|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+        ]);
+
+        $account->email = $request->email;
+        $account->save();
+
+        if ($account->person) {
+            $person = $account->person;
+            if ($request->filled('first_name')) {
+                $person->first_name = $request->first_name;
+            }
+            if ($request->filled('last_name')) {
+                $person->last_name = $request->last_name;
+            }
+            if ($request->filled('telephone_number')) {
+                $person->telephone_number = $request->telephone_number;
+            }
+            $person->email = $request->email; // Sync email
+            $person->save();
+        } elseif ($account->company) {
+            $company = $account->company;
+            if ($request->filled('company_name')) {
+                $company->name = $request->company_name;
+            }
+            $company->save();
+        }
+
+        return redirect()->back()->with('status', 'Account details updated successfully!');
+    }
 }

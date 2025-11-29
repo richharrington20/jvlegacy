@@ -6,34 +6,83 @@
 @section('content')
 <div class="mx-auto py-10">
     <div class="bg-white shadow rounded-lg p-4 mb-8 w-full">
-        <h1 class="text-2xl font-bold mb-4">Account Details</h1>
-        <div class="mb-2">
-            <span class="font-semibold">Account Name:</span>
-            <span>{{ $account->name }}</span>
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold">Account Details</h1>
+            <button onclick="document.getElementById('edit-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Edit Details
+            </button>
         </div>
-        <div class="mb-2">
-            <span class="font-semibold">Account Email:</span>
-            <span>{{ $account->email}}</span>
-        </div>
-        <div class="mb-2">
-            <span class="font-semibold">Account Type:</span>
-            <span>{{ ucfirst($account->type->name) }}</span>
-        </div>
-        @if($account->type === 'person')
+        
+        <div id="view-details">
             <div class="mb-2">
-                <span class="font-semibold">First Name:</span>
-                <span>{{ $account->first_name }}</span>
+                <span class="font-semibold">Account Name:</span>
+                <span>{{ $account->name }}</span>
             </div>
             <div class="mb-2">
-                <span class="font-semibold">Last Name:</span>
-                <span>{{ $account->last_name }}</span>
+                <span class="font-semibold">Account Email:</span>
+                <span>{{ $account->email}}</span>
             </div>
-        @elseif($account->type === 'company')
             <div class="mb-2">
-                <span class="font-semibold">Company Name:</span>
-                <span>{{ $account->company_name }}</span>
+                <span class="font-semibold">Account Type:</span>
+                <span>{{ ucfirst($account->type->name ?? 'Unknown') }}</span>
             </div>
-        @endif
+            @if($account->person)
+                <div class="mb-2">
+                    <span class="font-semibold">First Name:</span>
+                    <span>{{ $account->person->first_name ?? '—' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-semibold">Last Name:</span>
+                    <span>{{ $account->person->last_name ?? '—' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-semibold">Telephone:</span>
+                    <span>{{ $account->person->telephone_number ?? '—' }}</span>
+                </div>
+            @elseif($account->company)
+                <div class="mb-2">
+                    <span class="font-semibold">Company Name:</span>
+                    <span>{{ $account->company->name ?? '—' }}</span>
+                </div>
+            @endif
+        </div>
+
+        <form id="edit-form" method="POST" action="{{ route('admin.accounts.update', $account->id) }}" class="hidden space-y-4">
+            @csrf
+            @method('PUT')
+            
+            <div>
+                <label class="block text-sm font-medium mb-1">Email <span class="text-red-500">*</span></label>
+                <input type="email" name="email" value="{{ $account->email }}" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+            </div>
+
+            @if($account->person)
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">First Name</label>
+                        <input type="text" name="first_name" value="{{ $account->person->first_name ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Last Name</label>
+                        <input type="text" name="last_name" value="{{ $account->person->last_name ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Telephone</label>
+                    <input type="text" name="telephone_number" value="{{ $account->person->telephone_number ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+            @elseif($account->company)
+                <div>
+                    <label class="block text-sm font-medium mb-1">Company Name</label>
+                    <input type="text" name="company_name" value="{{ $account->company->name ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+            @endif
+
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Changes</button>
+                <button type="button" onclick="document.getElementById('edit-form').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+            </div>
+        </form>
     </div>
 
     <div class="bg-white shadow rounded-lg p-4 mb-8 w-full mt-8">
@@ -43,7 +92,7 @@
             <form action="{{ route('admin.accounts.masquerade', $account->id) }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" class="bg-purple-600 text-white rounded px-4 py-2 hover:bg-purple-700 font-semibold">
-                    👁️ View as Investor
+                    View as Investor
                 </button>
             </form>
             <p class="text-sm text-gray-600 mt-2">See exactly what this investor sees on their dashboard</p>

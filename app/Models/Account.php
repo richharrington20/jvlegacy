@@ -80,11 +80,11 @@ class Account extends Authenticatable
     public function getTypeIconAttribute(): string
     {
         if ($this->person) {
-            return '<span title="Individual" class="text-blue-500">👤</span>';
+            return '<span title="Individual" class="text-blue-500">[Person]</span>';
         } elseif ($this->company) {
-            return '<span title="Company" class="text-green-500">🏢</span>';
+            return '<span title="Company" class="text-green-500">[Company]</span>';
         }
 
-        return '<span title="Unknown" class="text-gray-500">❓</span>';
+        return '<span title="Unknown" class="text-gray-500">[?]</span>';
     }
 }

@@ -13,6 +13,17 @@ class Update extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+    
+    protected $fillable = [
+        'project_id',
+        'category',
+        'comment',
+        'sent_on',
+        'sent_by',
+        'sent',
+        'deleted',
+        'image_path', // Store path to uploaded image
+    ];
 
     // Casts (adjust types to your actual schema)
     protected $casts = [

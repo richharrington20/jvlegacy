@@ -8,6 +8,7 @@ use App\Models\Update;
 use App\Models\Investments;
 use App\Models\InvestorNotification;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -57,12 +58,30 @@ class UpdateController extends Controller
             'project_id' => 'required|exists:legacy.projects,project_id',
             'category' => 'nullable|integer',
             'comment' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
         ]);
 
         $update = Update::findOrFail($id);
         $update->project_id = $validated['project_id'];
         $update->category = $validated['category'] ?? 3;
         $update->comment = $validated['comment'];
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($update->image_path) {
+                $oldPath = str_replace(Storage::url(''), '', $update->image_path);
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+            
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs('updates', $imageName, 'public');
+            $update->image_path = Storage::url($imagePath);
+        }
+        
         $update->save();
 
         return redirect()->route('admin.updates.index')
@@ -85,6 +104,7 @@ class UpdateController extends Controller
             'project_id' => 'required|exists:legacy.projects,project_id',
             'category' => 'nullable|integer',
             'comment' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
         ]);
 
         $update = new Update();
@@ -92,6 +112,15 @@ class UpdateController extends Controller
         $update->category = $validated['category'] ?? 3;
         $update->comment = $validated['comment'];
         $update->sent_on = now();
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs('updates', $imageName, 'public');
+            $update->image_path = Storage::url($imagePath);
+        }
+        
         $update->save();
 
         $emailcount = $this->dispatchBulkEmails($update);

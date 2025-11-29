@@ -9,7 +9,7 @@
     <!-- New Update Form -->
     <div class="bg-white p-4 rounded shadow mb-6">
         <h1 class="text-xl font-bold mb-4">Post an update</h1>
-        <form method="POST" action="{{ route('admin.updates.store') }}" id="update-form" class="mb-6 space-y-4">
+        <form method="POST" action="{{ route('admin.updates.store') }}" id="update-form" class="mb-6 space-y-4" enctype="multipart/form-data">
             @csrf
             <div class="flex flex-wrap gap-4">
                 <div class="w-full md:w-1/2">

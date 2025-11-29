@@ -3,7 +3,61 @@
 @section('content')
 
     <div class="mx-auto mt-10" x-data="updateModal()">
-        <h1 class="text-2xl font-bold mb-4">Welcome, {{ $account->name }}</h1>
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold">Welcome, {{ $account->name }}</h1>
+            <button onclick="document.getElementById('profile-edit-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                Edit Profile
+            </button>
+        </div>
+
+        <div id="profile-edit-form" class="hidden bg-white shadow rounded-lg p-4 mb-6">
+            <h2 class="text-lg font-semibold mb-4">Edit Profile</h2>
+            <form method="POST" action="{{ route('investor.profile.update') }}" class="space-y-4">
+                @csrf
+                @method('PUT')
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email <span class="text-red-500">*</span></label>
+                    <input type="email" name="email" value="{{ $account->email }}" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+
+                @if($account->person)
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">First Name</label>
+                            <input type="text" name="first_name" value="{{ $account->person->first_name ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Last Name</label>
+                            <input type="text" name="last_name" value="{{ $account->person->last_name ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Telephone</label>
+                        <input type="text" name="telephone_number" value="{{ $account->person->telephone_number ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                @elseif($account->company)
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Company Name</label>
+                        <input type="text" name="company_name" value="{{ $account->company->name ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                @endif
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">New Password (leave blank to keep current)</label>
+                    <input type="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Confirm Password</label>
+                    <input type="password" name="password_confirmation" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Changes</button>
+                    <button type="button" onclick="document.getElementById('profile-edit-form').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+                </div>
+            </form>
+        </div>
 
         @if (session()->has('masquerading_as'))
             <div class="mb-4 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">

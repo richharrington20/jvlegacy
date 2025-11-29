@@ -45,7 +45,7 @@ class CreateAdminAccount extends Command
             'deleted' => 0,
         ]);
 
-        $this->info("✅ Admin account created successfully!");
+        $this->info("Admin account created successfully!");
         $this->line("Email: {$email}");
         $this->line("Password: {$password}");
         $this->line("Type: GUARDIAN (Global Admin)");

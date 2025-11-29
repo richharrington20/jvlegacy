@@ -84,7 +84,7 @@
                 <form method="POST" action="{{ route('admin.projects.resend_documents', $project->project_id) }}" class="inline">
                     @csrf
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-semibold">
-                        📧 Resend Documents to All Investors
+                        Resend Documents to All Investors
                     </button>
                 </form>
                 <p class="text-sm text-gray-600 mt-2">This will send all project documents to all {{ $investors->count() }} investors.</p>
