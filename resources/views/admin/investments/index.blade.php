@@ -75,20 +75,24 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
             @forelse ($investments as $inv)
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="window.location.href='{{ route('admin.accounts.show', ['id' => $inv->account->id ?? 0]) }}'" title="Click to view account details">
                     <td class="px-4 py-2 whitespace-nowrap">{{ $inv->id }}</td>
                     <td class="px-4 py-2 whitespace-nowrap">{{ $inv->project_id }} – {{ $inv->project->name ?? '—' }}</td>
                     <td class="px-4 py-2 whitespace-nowrap">
-                        <a href="{{ route ('admin.accounts.show' , [ 'id' => $inv->account->id ]) }}">
-                            {!! $inv->account->type_icon ?? '' !!}
-                            {{ $inv->account->name ?? '—' }}
-                        </a>
+                        {!! $inv->account->type_icon ?? '' !!}
+                        {{ $inv->account->name ?? '—' }}
                     </td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->transfer_id }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->pay_in_id }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->transfer_id ?? '—' }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->pay_in_id ?? '—' }}</td>
                     <td class="px-4 py-2 whitespace-nowrap">{!! money($inv->amount) !!}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->type_label }}</td>
-                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->paid ? 'Yes' : 'No' }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">{{ $inv->type_label ?? '—' }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        @if($inv->paid)
+                            <span class="text-green-600 font-semibold">Yes</span>
+                        @else
+                            <span class="text-gray-500">No</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-2 whitespace-nowrap">{{ human_date($inv->paid_on) }}</td>
                     <td class="px-4 py-2 whitespace-nowrap">{{ human_date($inv->reserved_until) }}</td>
                 </tr>
