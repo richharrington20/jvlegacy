@@ -89,6 +89,54 @@
             @php $totalPaid = $payouts->where('paid', 1)->sum('amount'); @endphp
             @php $timeline = $projectTimelines[$projectId] ?? null; @endphp
 
+            {{-- Project Documents Section (shown once per project, not per investment) --}}
+            @if($documents->count())
+                <div class="bg-white rounded shadow p-6 mb-4">
+                    <h4 class="text-lg font-semibold mb-4">Project Documents</h4>
+                    <div class="flex flex-wrap gap-4 items-start">
+                        @foreach($documents as $document)
+                            <a href="{{ $document->url }}"
+                               target="_blank"
+                               class="inline-flex flex-col items-center justify-center group p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                               title="{{ $document->name ?? 'Download document' }}">
+                                <i class="{{ $document->icon }} text-3xl mb-2 group-hover:scale-110 transition-transform"></i>
+                                <span class="text-xs text-gray-600 group-hover:text-gray-900 text-center max-w-[100px]">
+                                    {{ $document->name ?? 'Document' }}
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                    <div class="mt-4 flex items-center gap-4">
+                        <form method="POST" action="{{ route('investor.documents.email', $project->project_id) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="text-sm text-purple-700 underline hover:text-purple-900">
+                                Email me these documents
+                            </button>
+                        </form>
+                        @if($documentLogs->count())
+                            <div class="text-xs text-gray-500">
+                                Last emailed: {{ $documentLogs->first()->sent_at?->format('d M Y H:i') ?? 'Never' }}
+                            </div>
+                        @endif
+                    </div>
+                    @if($documentLogs->count())
+                        <details class="mt-3">
+                            <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700">View email history</summary>
+                            <ul class="text-xs text-gray-600 space-y-1 mt-2 ml-4">
+                                @foreach($documentLogs as $log)
+                                    <li>
+                                        {{ $log->document_name ?? 'Document' }} &middot;
+                                        sent {{ $log->sent_at?->format('d M Y H:i') ?? '' }}
+                                        to {{ $log->recipient }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </details>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Investments Table (shows individual investments, no documents column) --}}
             <div id="project-{{ $projectId }}" class="bg-white rounded shadow overflow-x-auto mb-8">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -101,9 +149,6 @@
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Type
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Documents
                             </th>
                         </tr>
                     </thead>
@@ -118,45 +163,6 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $inv->type_label }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div class="flex flex-wrap gap-3 items-center">
-                                        @forelse($documents as $document)
-                                            <a href="{{ $document->url }}"
-                                               target="_blank"
-                                               class="inline-flex flex-col items-center justify-center group"
-                                               title="{{ $document->name ?? 'Download document' }}">
-                                                <i class="{{ $document->icon }} text-2xl mb-1 group-hover:scale-110 transition-transform"></i>
-                                                <span class="text-xs text-gray-600 group-hover:text-gray-900 text-center max-w-[80px] truncate">
-                                                    {{ $document->name ?? 'Document' }}
-                                                </span>
-                                            </a>
-                                        @empty
-                                            <span class="text-gray-400">No documents yet</span>
-                                        @endforelse
-                                    </div>
-                                    @if($documents->count())
-                                        <form method="POST" action="{{ route('investor.documents.email', $project->project_id) }}" class="mt-2">
-                                            @csrf
-                                            <button type="submit" class="text-xs text-purple-700 underline hover:text-purple-900">
-                                                Email me these documents
-                                            </button>
-                                        </form>
-                                    @endif
-                                    @if($documentLogs->count())
-                                        <div class="mt-3">
-                                            <p class="text-xs text-gray-500 uppercase tracking-wide">Recent Document Emails</p>
-                                            <ul class="text-xs text-gray-600 space-y-1">
-                                                @foreach($documentLogs as $log)
-                                                    <li>
-                                                        {{ $log->document_name ?? 'Document' }} &middot;
-                                                        sent {{ $log->sent_at?->format('d M Y H:i') ?? '' }}
-                                                        to {{ $log->recipient }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    @endif
                                 </td>
                             </tr>
                         @endforeach
