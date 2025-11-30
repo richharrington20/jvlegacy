@@ -40,8 +40,12 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Account (Investor) <span class="text-red-500">*</span></label>
                     <select name="account_id" id="account-select" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                        <option value="">Search for an account...</option>
+                        <option value="">Start typing to search (min. 2 characters)...</option>
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Type at least 2 characters to search by name, email, or account ID
+                    </p>
                     <input type="hidden" name="selected_account_id" id="selected-account-id">
                     @error('account_id')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -163,12 +167,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Select2 for account search
     $('#account-select').select2({
-        placeholder: 'Search for an account...',
+        placeholder: 'Start typing to search (min. 2 characters)...',
         allowClear: true,
         ajax: {
             url: '{{ route("admin.investments.search-accounts") }}',
             dataType: 'json',
-            delay: 250,
+            delay: 300,
             data: function (params) {
                 return {
                     q: params.term, // search term
@@ -178,20 +182,37 @@ document.addEventListener('DOMContentLoaded', function() {
             processResults: function (data, params) {
                 params.page = params.page || 1;
                 return {
-                    results: data.results,
+                    results: data.results || [],
                     pagination: {
-                        more: (params.page * 50) < data.total_count
+                        more: (params.page * 50) < (data.total_count || 0)
                     }
                 };
             },
             cache: true
         },
         minimumInputLength: 2,
+        language: {
+            inputTooShort: function() {
+                return 'Please enter at least 2 characters to search';
+            },
+            searching: function() {
+                return 'Searching...';
+            },
+            noResults: function() {
+                return 'No accounts found';
+            }
+        },
         templateResult: function(account) {
             if (account.loading) {
+                return '<div class="text-gray-500">Searching...</div>';
+            }
+            if (!account.id) {
                 return account.text;
             }
-            return $('<div>').text(account.text);
+            return $('<div class="py-1">').html(
+                '<div class="font-medium">' + account.text + '</div>' +
+                '<div class="text-xs text-gray-500">' + (account.email || '') + '</div>'
+            );
         },
         templateSelection: function(account) {
             return account.text || account.id;

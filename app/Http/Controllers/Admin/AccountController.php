@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountType;
+use App\Models\DocumentEmailLog;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -115,7 +116,35 @@ class AccountController extends Controller
             $accountDocuments = collect();
         }
 
-        return view('admin.accounts.show', compact('account', 'entity', 'projectInvestments', 'availableProjects', 'accountDocuments'));
+        // Get email history (document emails sent to this account)
+        try {
+            $emailHistory = DocumentEmailLog::where('account_id', $account->id)
+                ->with('project')
+                ->orderByDesc('sent_at')
+                ->limit(50)
+                ->get();
+        } catch (\Exception $e) {
+            $emailHistory = collect();
+        }
+
+        // Calculate stats
+        $totalInvested = $account->investments()->sum('amount');
+        $totalPaid = $account->investments()->where('paid', 1)->sum('amount');
+        $totalUnpaid = $account->investments()->where('paid', 0)->sum('amount');
+        $investmentCount = $account->investments()->count();
+
+        return view('admin.accounts.show', compact(
+            'account', 
+            'entity', 
+            'projectInvestments', 
+            'availableProjects', 
+            'accountDocuments',
+            'emailHistory',
+            'totalInvested',
+            'totalPaid',
+            'totalUnpaid',
+            'investmentCount'
+        ));
     }
 
     public function updateType(Request $request, $id)
