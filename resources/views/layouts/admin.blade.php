@@ -23,7 +23,7 @@
     <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvZOOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdgNs3Y/WjMd0FDhL/g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     @stack('head')
 </head>
