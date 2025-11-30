@@ -268,7 +268,10 @@
             <!-- Investments Tab -->
             <div x-show="activeTab === 'investments'" x-transition style="display: none;">
                 @foreach ($investments as $projectId => $projectInvestments)
-                    @php $project = $projectInvestments->first()->project; @endphp
+                    @php 
+                        $firstInv = $projectInvestments->first();
+                        $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                    @endphp
                     @php $timeline = $projectTimelines[$projectId] ?? null; @endphp
                     
                     <div class="mb-8 bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -338,7 +341,7 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    @if($updates->count() > 3)
+                                    @if($updates->count() > 3 && $project && $project->project_id)
                                         <a href="{{ route('public.projects.show', $project->project_id) }}" class="mt-3 inline-block text-sm text-blue-600 hover:underline">
                                             View all {{ $updates->count() }} updates
                                         </a>
@@ -381,12 +384,13 @@
                         </div>
                     </div>
 
+                    @if($project)
                     <dialog id="support-modal-{{ $projectId }}" class="rounded-lg w-full max-w-2xl p-0">
                         <form method="POST" action="{{ route('investor.support.store') }}">
                             @csrf
-                            <input type="hidden" name="project_id" value="{{ $project->project_id }}">
+                            <input type="hidden" name="project_id" value="{{ $project->project_id ?? $projectId }}">
                             <div class="p-6 border-b">
-                                <h4 class="text-xl font-semibold">Support Request · {{ $project->name }}</h4>
+                                <h4 class="text-xl font-semibold">Support Request · {{ $project->name ?? 'Project #' . $projectId }}</h4>
                                 <p class="text-sm text-gray-500 mt-1">Tell us what you need help with; the team will reply by email.</p>
                             </div>
                             <div class="p-6 space-y-4">
@@ -405,13 +409,17 @@
                             </div>
                         </form>
                     </dialog>
+                    @endif
                 @endforeach
             </div>
 
             <!-- Documents Tab -->
             <div x-show="activeTab === 'documents'" x-transition style="display: none;">
                 @foreach ($investments as $projectId => $projectInvestments)
-                    @php $project = $projectInvestments->first()->project; @endphp
+                    @php 
+                        $firstInv = $projectInvestments->first();
+                        $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                    @endphp
                     @php $documents = $projectDocuments[$projectId] ?? collect(); @endphp
                     @php $documentLogs = $projectDocumentLogs[$projectId] ?? collect(); @endphp
                     
@@ -449,7 +457,10 @@
             <!-- Payouts Tab -->
             <div x-show="activeTab === 'payouts'" x-transition style="display: none;">
                 @foreach ($investments as $projectId => $projectInvestments)
-                    @php $project = $projectInvestments->first()->project; @endphp
+                    @php 
+                        $firstInv = $projectInvestments->first();
+                        $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                    @endphp
                     @php $payouts = $projectPayouts[$projectId] ?? collect(); @endphp
                     @php $totalPaid = $payouts->where('paid', 1)->sum('amount'); @endphp
                     
@@ -598,8 +609,13 @@
                                 <select x-model="newTicket.project_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                                     <option value="">Select a project...</option>
                                     @foreach($investments as $projectId => $projectInvestments)
-                                        @php $project = $projectInvestments->first()->project; @endphp
+                                        @php 
+                                            $firstInv = $projectInvestments->first();
+                                            $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                                        @endphp
+                                        @if($project && $project->project_id)
                                         <option value="{{ $project->project_id }}">{{ $project->name }}</option>
+                                        @endif
                                     @endforeach
                                 </select>
                             </div>
