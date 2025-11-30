@@ -46,7 +46,15 @@ class AccountController extends Controller
 
     public function show($id)
     {
-        $account = Account::on('legacy')->with(['person', 'company', 'investments.project', 'documents'])->findOrFail($id);
+        $account = Account::on('legacy')->with(['person', 'company', 'investments.project'])->findOrFail($id);
+        
+        // Load documents if table exists
+        try {
+            $account->load('documents');
+        } catch (\Exception $e) {
+            // Table doesn't exist yet, use empty collection
+            $account->setRelation('documents', collect());
+        }
 
         $entity = $account->person ?? $account->company;
 
@@ -100,8 +108,12 @@ class AccountController extends Controller
         ->limit(3)
         ->get();
 
-        // Get account documents
-        $accountDocuments = $account->documents;
+        // Get account documents (if table exists)
+        try {
+            $accountDocuments = $account->documents;
+        } catch (\Exception $e) {
+            $accountDocuments = collect();
+        }
 
         return view('admin.accounts.show', compact('account', 'entity', 'projectInvestments', 'availableProjects', 'accountDocuments'));
     }

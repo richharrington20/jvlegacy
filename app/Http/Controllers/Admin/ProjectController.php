@@ -91,9 +91,17 @@ class ProjectController extends Controller
 
     public function show($projectId)
     {
-        $project = Project::with(['property', 'investorDocuments', 'documents'])
+        $project = Project::with(['property', 'investorDocuments'])
             ->where('project_id', $projectId)
             ->firstOrFail();
+        
+        // Load documents if table exists
+        try {
+            $project->load('documents');
+        } catch (\Exception $e) {
+            // Table doesn't exist yet, use empty collection
+            $project->setRelation('documents', collect());
+        }
 
         // Get ALL investments (paid and unpaid) for financial summary
         // Note: project_id in investments table refers to the internal id, not project_id
@@ -143,8 +151,12 @@ class ProjectController extends Controller
             ->limit(500)
             ->get();
 
-        // Get project documents
-        $projectDocuments = $project->documents;
+        // Get project documents (if table exists)
+        try {
+            $projectDocuments = $project->documents;
+        } catch (\Exception $e) {
+            $projectDocuments = collect();
+        }
 
         return view('admin.projects.show', compact(
             'project',
