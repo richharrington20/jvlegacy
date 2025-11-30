@@ -661,6 +661,55 @@ Route::get('/run-system-status-migration', function () {
     }
 })->name('run.system.status.migration');
 
+// One-time route to run support ticket replies migration
+Route::get('/run-support-ticket-migration', function () {
+    try {
+        $filePath = database_path('migrations_sql/006_create_support_ticket_replies.sql');
+        
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'File not found: ' . $filePath,
+            ], 404);
+        }
+        
+        $sql = file_get_contents($filePath);
+        
+        // Execute the SQL directly
+        try {
+            \DB::connection('legacy')->unprepared($sql);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Support ticket replies migration completed!',
+                'note' => 'The support_ticket_replies table has been created and support_tickets table has been updated.',
+            ], 200, [], JSON_PRETTY_PRINT);
+        } catch (\Exception $e) {
+            // Check if error is because table/columns already exist
+            if (str_contains($e->getMessage(), 'already exists') || 
+                str_contains($e->getMessage(), 'Duplicate') ||
+                str_contains($e->getMessage(), 'Table \'jvsys.support_ticket_replies\' already exists')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Support ticket tables already exist!',
+                    'note' => 'The tables/columns were already present in the database.',
+                ], 200, [], JSON_PRETTY_PRINT);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+})->name('run.support.ticket.migration');
+
 // One-time route to run document migrations (remove after use)
 Route::get('/run-document-migrations', function () {
     try {
