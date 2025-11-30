@@ -214,6 +214,12 @@ Route::prefix('investor')->name('investor.')->group(function () {
             Route::get('/support/tickets/{ticketId}', [InvestorSupportController::class, 'show'])->name('support.show');
             Route::post('/support/tickets', [InvestorSupportController::class, 'store'])->name('support.store');
             Route::post('/support/tickets/{ticketId}/reply', [InvestorSupportController::class, 'reply'])->name('support.reply');
+            
+            // Account sharing
+            Route::get('/account-shares', [\App\Http\Controllers\Investor\AccountShareController::class, 'index'])->name('account-shares.index');
+            Route::post('/account-shares', [\App\Http\Controllers\Investor\AccountShareController::class, 'store'])->name('account-shares.store');
+            Route::delete('/account-shares/{shareId}', [\App\Http\Controllers\Investor\AccountShareController::class, 'destroy'])->name('account-shares.destroy');
+            Route::post('/account-shares/{shareId}/remove', [\App\Http\Controllers\Investor\AccountShareController::class, 'removeSharedAccess'])->name('account-shares.remove');
     });
 });
 

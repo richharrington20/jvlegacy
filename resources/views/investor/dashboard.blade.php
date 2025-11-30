@@ -120,16 +120,11 @@
                     <i class="fas fa-pound-sign mr-2"></i>Payouts
                 </button>
                 <button 
-                    @click="activeTab = 'notifications'"
-                    :class="activeTab === 'notifications' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                    class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors relative"
+                    @click="activeTab = 'email-history'"
+                    :class="activeTab === 'email-history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors"
                 >
-                    <i class="fas fa-bell mr-2"></i>Notifications
-                    @if($notifications->where('read_at', null)->count() > 0)
-                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            {{ $notifications->where('read_at', null)->count() }}
-                        </span>
-                    @endif
+                    <i class="fas fa-envelope mr-2"></i>Email History
                 </button>
                 <button 
                     @click="activeTab = 'helpdesk'"
@@ -142,6 +137,13 @@
                             {{ $supportTickets->where('status', 'open')->count() }}
                         </span>
                     @endif
+                </button>
+                <button 
+                    @click="activeTab = 'sharing'"
+                    :class="activeTab === 'sharing' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors"
+                >
+                    <i class="fas fa-share-alt mr-2"></i>Account Sharing
                 </button>
             </nav>
         </div>
@@ -503,52 +505,346 @@
                 @endforeach
             </div>
 
-            <!-- Notifications Tab -->
-            <div x-show="activeTab === 'notifications'" x-transition style="display: none;">
+            <!-- Email History Tab -->
+            <div x-show="activeTab === 'email-history'" x-transition style="display: none;">
                 <div class="bg-white border border-gray-200 rounded-lg">
-                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                        <h3 class="text-lg font-semibold">Notifications</h3>
-                        @if($notifications->count())
-                            <form method="POST" action="{{ route('investor.notifications.read_all') }}">
-                                @csrf
-                                <button type="submit" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                                    Mark all read
-                                </button>
-                            </form>
-                        @endif
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold">Email History</h3>
+                        <p class="text-sm text-gray-600 mt-1">All emails sent to you from the system</p>
                     </div>
-                    @if($notifications->isEmpty())
-                        <div class="p-12 text-center">
-                            <i class="fas fa-bell-slash text-gray-300 text-5xl mb-4"></i>
-                            <p class="text-gray-500">No notifications yet.</p>
+                    @if(isset($emailHistory) && $emailHistory->count() > 0)
+                        <div class="divide-y divide-gray-200">
+                            @foreach($emailHistory as $email)
+                                <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0 mt-1">
+                                            <i class="{{ $email->icon }} text-xl"></i>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ 
+                                                            $email->email_type === 'document' ? 'bg-blue-100 text-blue-800' : 
+                                                            ($email->email_type === 'project_update' ? 'bg-green-100 text-green-800' : 
+                                                            ($email->email_type === 'support_ticket' ? 'bg-purple-100 text-purple-800' : 
+                                                            ($email->email_type === 'payout' ? 'bg-emerald-100 text-emerald-800' : 
+                                                            'bg-gray-100 text-gray-800'))) 
+                                                        }}">
+                                                            {{ $email->type_label }}
+                                                        </span>
+                                                        @if($email->project)
+                                                            <span class="text-xs text-gray-500">• {{ $email->project->name }}</span>
+                                                        @endif
+                                                    </div>
+                                                    <h4 class="text-sm font-semibold text-gray-900 mb-1">
+                                                        {{ $email->subject ?? 'No subject' }}
+                                                    </h4>
+                                                    <p class="text-xs text-gray-500">
+                                                        To: {{ $email->recipient }}
+                                                    </p>
+                                                </div>
+                                                <div class="flex-shrink-0 text-right">
+                                                    <p class="text-xs text-gray-500 whitespace-nowrap">
+                                                        {{ $email->sent_at?->format('d M Y, H:i') ?? 'Unknown date' }}
+                                                    </p>
+                                                    <p class="text-xs text-gray-400 mt-1">
+                                                        {{ $email->sent_at?->diffForHumans() ?? '' }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
+                        @if($emailHistory->hasPages())
+                            <div class="px-6 py-4 border-t border-gray-200">
+                                {{ $emailHistory->links() }}
+                            </div>
+                        @endif
                     @else
-                        <ul class="divide-y divide-gray-200">
-                            @foreach($notifications as $notification)
-                                <li class="px-6 py-4 hover:bg-gray-50 transition-colors {{ $notification->read_at ? 'bg-gray-50' : 'bg-white' }}">
+                        <div class="p-12 text-center">
+                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-500">No email history yet.</p>
+                            <p class="text-sm text-gray-400 mt-2">Emails sent to you will appear here</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Helpdesk Tab -->
+            <div x-show="activeTab === 'helpdesk'" x-transition style="display: none;" x-data="helpdeskData()">
+                <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Support Tickets</h3>
+                            <p class="text-sm text-gray-600 mt-1">Create a support ticket or view existing ones</p>
+                        </div>
+                        <button 
+                            @click="showCreateForm = !showCreateForm"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                        >
+                            <i class="fas fa-plus mr-2"></i>New Ticket
+                        </button>
+                    </div>
+
+                    <!-- Create Ticket Form -->
+                    <div x-show="showCreateForm" class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="font-semibold mb-3">Create Support Ticket</h4>
+                        <form @submit.prevent="createTicket" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Project (Optional)</label>
+                                <select x-model="newTicket.project_id" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="">Select a project...</option>
+                                    @foreach($investments as $projectId => $projectInvestments)
+                                        @php $project = $projectInvestments->first()->project; @endphp
+                                        <option value="{{ $project->project_id }}">{{ $project->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Subject</label>
+                                <input 
+                                    type="text" 
+                                    x-model="newTicket.subject" 
+                                    required
+                                    placeholder="e.g. Questions about Q3 payout"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Message</label>
+                                <textarea 
+                                    x-model="newTicket.message" 
+                                    required
+                                    rows="5"
+                                    placeholder="Give us as much detail as possible..."
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                ></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button 
+                                    type="submit" 
+                                    :disabled="creatingTicket"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
+                                >
+                                    <span x-show="!creatingTicket">Submit Ticket</span>
+                                    <span x-show="creatingTicket">Creating...</span>
+                                </button>
+                                <button 
+                                    type="button" 
+                                    @click="showCreateForm = false"
+                                    class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                        <div x-show="successMessage" class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-800" x-html="successMessage"></div>
+                    </div>
+
+                    <!-- Tickets List -->
+                    <div x-show="tickets.length === 0 && !loading" class="text-center py-12">
+                        <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No support tickets yet</p>
+                        <p class="text-sm text-gray-400 mt-2">Create your first ticket to get started</p>
+                    </div>
+
+                    <div x-show="loading" class="text-center py-12">
+                        <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                        <p class="text-gray-500 mt-2">Loading tickets...</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <template x-for="ticket in tickets" :key="ticket.id">
+                            <div 
+                                @click="selectedTicket = ticket"
+                                :class="selectedTicket?.id === ticket.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'"
+                                class="p-4 bg-white border rounded-lg cursor-pointer transition-all"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h4 class="font-semibold text-gray-900" x-text="ticket.subject"></h4>
+                                            <span 
+                                                :class="ticket.status === 'open' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'"
+                                                class="px-2 py-0.5 text-xs font-medium rounded-full"
+                                                x-text="ticket.status"
+                                            ></span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2" x-text="ticket.message?.substring(0, 100) + '...'"></p>
+                                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                                            <span><i class="fas fa-ticket-alt mr-1"></i>Ticket ID: <strong x-text="ticket.ticket_id"></strong></span>
+                                            <span x-text="'Created: ' + formatDate(ticket.created_on)"></span>
+                                            <span x-show="ticket.project" x-text="'Project: ' + ticket.project?.name"></span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <span 
+                                            x-show="ticket.replies && ticket.replies.length > 0"
+                                            class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
+                                            x-text="ticket.replies.length + ' replies'"
+                                        ></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Ticket Chat View -->
+                    <div x-show="selectedTicket" class="mt-6 bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-semibold text-gray-900" x-text="selectedTicket?.subject"></h4>
+                            <button 
+                                @click="selectedTicket = null"
+                                class="text-gray-400 hover:text-gray-600"
+                            >
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="max-h-96 overflow-y-auto space-y-4 mb-4">
+                            <template x-for="reply in (selectedTicket?.replies || [])" :key="reply.id">
+                                <div 
+                                    :class="reply.is_from_support ? 'ml-12 bg-blue-50' : 'mr-12 bg-gray-50'"
+                                    class="p-3 rounded-lg"
+                                >
+                                    <div class="flex items-start justify-between mb-1">
+                                        <span 
+                                            :class="reply.is_from_support ? 'text-blue-800 font-semibold' : 'text-gray-800 font-semibold'"
+                                            class="text-sm"
+                                            x-text="reply.is_from_support ? 'Support Team' : 'You'"
+                                        ></span>
+                                        <span class="text-xs text-gray-500" x-text="formatDate(reply.created_on)"></span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 whitespace-pre-wrap" x-text="reply.message"></p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <form @submit.prevent="sendReply(selectedTicket.ticket_id)" class="flex gap-2">
+                            <input 
+                                type="text"
+                                x-model="replyMessages[selectedTicket.ticket_id]"
+                                placeholder="Type your reply..."
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                            <button 
+                                type="submit"
+                                :disabled="sendingReply === selectedTicket.ticket_id"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Sharing Tab -->
+            <div x-show="activeTab === 'sharing'" x-transition style="display: none;" x-data="sharingData()">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Share Access Section -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Share Your Access</h3>
+                            <i class="fas fa-share-alt text-blue-500"></i>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Allow another account to view your investments, documents, and payouts.</p>
+                        
+                        <form @submit.prevent="shareAccess" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    x-model="shareEmail" 
+                                    required
+                                    placeholder="Enter email address"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <p class="text-xs text-gray-500 mt-1">The account must already exist in the system</p>
+                            </div>
+                            <button 
+                                type="submit" 
+                                :disabled="sharing"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                            >
+                                <span x-show="!sharing">Share Access</span>
+                                <span x-show="sharing">Sharing...</span>
+                            </button>
+                        </form>
+
+                        <div x-show="shareSuccess" class="mt-4 p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <span x-text="shareMessage"></span>
+                        </div>
+                        <div x-show="shareError" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span x-text="shareErrorMessage"></span>
+                        </div>
+
+                        <!-- Shared Accounts List -->
+                        <div class="mt-6 pt-6 border-t">
+                            <h4 class="text-sm font-semibold mb-3">Accounts You've Shared With</h4>
+                            <div x-show="sharedByMe.length === 0" class="text-sm text-gray-500 text-center py-4">
+                                No shared accounts yet
+                            </div>
+                            <div class="space-y-2">
+                                <template x-for="share in sharedByMe" :key="share.id">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                                        <div>
+                                            <p class="text-sm font-medium" x-text="share.shared_account?.name || share.shared_account?.email"></p>
+                                            <p class="text-xs text-gray-500" x-text="share.shared_account?.email"></p>
+                                            <p class="text-xs text-gray-400 mt-1" x-text="'Shared on ' + formatDate(share.accepted_on || share.invited_on)"></p>
+                                        </div>
+                                        <button 
+                                            @click="revokeShare(share.id)"
+                                            class="px-3 py-1 text-xs text-red-600 hover:text-red-800 font-medium"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shared With Me Section -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold">Shared With Me</h3>
+                            <i class="fas fa-users text-green-500"></i>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Accounts that have shared their investments with you.</p>
+                        
+                        <div x-show="sharedWithMe.length === 0" class="text-sm text-gray-500 text-center py-8">
+                            <i class="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
+                            <p>No shared access yet</p>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="share in sharedWithMe" :key="share.id">
+                                <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
                                     <div class="flex items-start justify-between">
                                         <div class="flex-1">
-                                            <p class="text-sm {{ $notification->read_at ? 'text-gray-500' : 'text-gray-900 font-medium' }}">
-                                                {{ $notification->message }}
-                                            </p>
-                                            <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at?->format('d M Y H:i') }}</p>
-                                            @if($notification->link)
-                                                <a href="{{ $notification->link }}" class="text-xs text-blue-600 hover:underline mt-1 inline-block">View</a>
-                                            @endif
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <p class="text-sm font-semibold" x-text="share.primary_account?.name || share.primary_account?.email"></p>
+                                                <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded">Shared</span>
+                                            </div>
+                                            <p class="text-xs text-gray-600 mb-2" x-text="share.primary_account?.email"></p>
+                                            <p class="text-xs text-gray-500" x-text="'Access granted on ' + formatDate(share.accepted_on || share.invited_on)"></p>
                                         </div>
-                                        @if(!$notification->read_at)
-                                            <form method="POST" action="{{ route('investor.notifications.read', $notification->id) }}" class="ml-4">
-                                                @csrf
-                                                <button type="submit" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                                                    Mark read
-                                                </button>
-                                            </form>
-                                        @endif
+                                        <button 
+                                            @click="removeSharedAccess(share.id)"
+                                            class="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 font-medium"
+                                        >
+                                            Remove
+                                        </button>
                                     </div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -640,6 +936,7 @@ function helpdeskData() {
     return {
         tickets: @json($supportTickets ?? []),
         selectedTicket: null,
+        showCreateForm: false,
         newTicket: {
             subject: '',
             message: '',
@@ -767,6 +1064,125 @@ function helpdeskData() {
             if (days < 7) return `${days}d ago`;
             
             return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+    }
+}
+
+function sharingData() {
+    return {
+        shareEmail: '',
+        sharing: false,
+        shareSuccess: false,
+        shareError: false,
+        shareMessage: '',
+        shareErrorMessage: '',
+        sharedWithMe: [],
+        sharedByMe: [],
+        
+        async init() {
+            await this.loadShares();
+        },
+        
+        async loadShares() {
+            try {
+                const response = await fetch('{{ route("investor.account-shares.index") }}', {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                this.sharedWithMe = data.shared_with_me || [];
+                this.sharedByMe = data.shared_by_me || [];
+            } catch (error) {
+                console.error('Error loading shares:', error);
+            }
+        },
+        
+        async shareAccess() {
+            this.sharing = true;
+            this.shareSuccess = false;
+            this.shareError = false;
+            
+            try {
+                const response = await fetch('{{ route("investor.account-shares.store") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email: this.shareEmail })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.shareSuccess = true;
+                    this.shareMessage = data.message || 'Access shared successfully!';
+                    this.shareEmail = '';
+                    await this.loadShares();
+                } else {
+                    this.shareError = true;
+                    this.shareErrorMessage = data.message || 'Failed to share access.';
+                }
+            } catch (error) {
+                this.shareError = true;
+                this.shareErrorMessage = 'Error sharing access: ' + error.message;
+            } finally {
+                this.sharing = false;
+            }
+        },
+        
+        async revokeShare(shareId) {
+            if (!confirm('Are you sure you want to revoke access?')) return;
+            
+            try {
+                const response = await fetch(`/investor/account-shares/${shareId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await this.loadShares();
+                } else {
+                    alert('Error revoking access: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error revoking access: ' + error.message);
+            }
+        },
+        
+        async removeSharedAccess(shareId) {
+            if (!confirm('Are you sure you want to remove this shared access?')) return;
+            
+            try {
+                const response = await fetch(`/investor/account-shares/${shareId}/remove`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await this.loadShares();
+                } else {
+                    alert('Error removing access: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error removing access: ' + error.message);
+            }
+        },
+        
+        formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         }
     }
 }

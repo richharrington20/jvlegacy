@@ -282,6 +282,9 @@
                         }
                     @endphp
                     
+                    <div class="flex items-center">
+                        <img src="{{ asset('logo.png') }}" alt="JaeVee" class="h-8 w-auto mr-3">
+                    </div>
                     <nav class="flex items-center space-x-2 text-sm" aria-label="Breadcrumb">
                         <ol class="flex items-center space-x-2">
                             @foreach($breadcrumbs as $index => $crumb)
@@ -302,6 +305,93 @@
                     </nav>
                 </div>
                 <div class="flex items-center space-x-4">
+                    @php
+                        $unreadNotifications = 0;
+                        try {
+                            $unreadNotifications = \App\Models\InvestorNotification::where('account_id', auth()->id())
+                                ->whereNull('read_at')
+                                ->count();
+                        } catch (\Exception $e) {
+                            // Table doesn't exist yet
+                        }
+                    @endphp
+                    
+                    <!-- Notifications Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button 
+                            @click="open = !open"
+                            class="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                        >
+                            <i class="fas fa-bell text-xl"></i>
+                            @if($unreadNotifications > 0)
+                                <span class="absolute top-0 right-0 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                                    {{ $unreadNotifications > 9 ? '9+' : $unreadNotifications }}
+                                </span>
+                            @endif
+                        </button>
+                        
+                        <div 
+                            x-show="open"
+                            @click.away="open = false"
+                            x-transition
+                            class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto"
+                            style="display: none;"
+                        >
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="font-semibold text-gray-900">Notifications</h3>
+                            </div>
+                            <div class="p-2">
+                                @php
+                                    try {
+                                        $recentNotifications = \App\Models\InvestorNotification::where('account_id', auth()->id())
+                                            ->orderByDesc('created_at')
+                                            ->limit(10)
+                                            ->get();
+                                    } catch (\Exception $e) {
+                                        $recentNotifications = collect();
+                                    }
+                                @endphp
+                                
+                                @if($recentNotifications->isEmpty())
+                                    <div class="p-4 text-center text-gray-500 text-sm">
+                                        <i class="fas fa-bell-slash text-2xl mb-2"></i>
+                                        <p>No notifications</p>
+                                    </div>
+                                @else
+                                    @foreach($recentNotifications as $notification)
+                                        <div class="p-3 hover:bg-gray-50 rounded-lg {{ !$notification->read_at ? 'bg-blue-50' : '' }}">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex-1">
+                                                    <p class="text-sm {{ !$notification->read_at ? 'font-semibold text-gray-900' : 'text-gray-700' }}">
+                                                        {{ $notification->message }}
+                                                    </p>
+                                                    <p class="text-xs text-gray-500 mt-1">
+                                                        {{ $notification->created_at?->diffForHumans() ?? '' }}
+                                                    </p>
+                                                </div>
+                                                @if(!$notification->read_at)
+                                                    <form method="POST" action="{{ route('investor.notifications.read', $notification->id) }}" class="ml-2">
+                                                        @csrf
+                                                        <button type="submit" class="text-blue-600 hover:text-blue-800">
+                                                            <i class="fas fa-check text-xs"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                            @if($recentNotifications->isNotEmpty())
+                                <div class="p-2 border-t border-gray-200">
+                                    <a href="{{ route('investor.dashboard') }}#notifications" class="block text-center text-sm text-blue-600 hover:text-blue-800 py-2">
+                                        View all notifications
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    
                     @if (session()->has('masquerading_from_admin'))
                         <div class="flex items-center px-3 py-1 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-xs">
                             <i class="fas fa-user-secret mr-2"></i>

@@ -48,6 +48,13 @@ class SystemStatus extends Model
         return $this->belongsTo(Account::class, 'created_by');
     }
 
+    public function updates()
+    {
+        return $this->hasMany(\App\Models\SystemStatusUpdate::class, 'status_id')
+            ->where('deleted', false)
+            ->orderByDesc('created_on');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true)->where('deleted', false);

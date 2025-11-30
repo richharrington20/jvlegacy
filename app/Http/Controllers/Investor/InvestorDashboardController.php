@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
+use App\Models\AccountShare;
 use App\Models\DocumentEmailLog;
+use App\Models\EmailHistory;
 use App\Models\InvestorNotification;
 use App\Models\Project;
 use App\Models\ProjectQuarterlyIncomePayee;
@@ -20,11 +22,43 @@ class InvestorDashboardController extends Controller
     {
         $account = auth('investor')->user();
 
-        $investments = $account->investments()
+        // Get own investments
+        $ownInvestments = $account->investments()
             ->with('project')
             ->where('paid', 1)
-            ->get()
-            ->groupBy('project_id');
+            ->get();
+
+        // Get shared accounts (accounts that have shared access with this account)
+        $sharedAccounts = AccountShare::where('shared_account_id', $account->id)
+            ->where('status', AccountShare::STATUS_ACTIVE)
+            ->where('deleted', false)
+            ->with('primaryAccount')
+            ->get();
+
+        // Get investments from shared accounts
+        $sharedInvestments = collect();
+        $sharedAccountMap = [];
+        foreach ($sharedAccounts as $share) {
+            $primaryAccount = $share->primaryAccount;
+            if ($primaryAccount) {
+                $primaryInvestments = $primaryAccount->investments()
+                    ->with('project')
+                    ->where('paid', 1)
+                    ->get();
+                
+                // Mark these as shared investments
+                foreach ($primaryInvestments as $investment) {
+                    $investment->is_shared = true;
+                    $investment->shared_from_account = $primaryAccount;
+                    $sharedInvestments->push($investment);
+                }
+                $sharedAccountMap[$primaryAccount->id] = $primaryAccount;
+            }
+        }
+
+        // Combine own and shared investments
+        $allInvestments = $ownInvestments->merge($sharedInvestments);
+        $investments = $allInvestments->groupBy('project_id');
 
         // For each project, get paginated updates
         $projectUpdates = [];
@@ -118,6 +152,87 @@ class InvestorDashboardController extends Controller
             $systemStatus = null;
         }
 
+        // Get email history (combine all email sources)
+        $emailHistory = collect();
+        try {
+            // Get document emails
+            $documentEmails = DocumentEmailLog::where('account_id', $account->id)
+                ->with('project')
+                ->get()
+                ->map(function($log) {
+                    return (object)[
+                        'id' => 'doc_' . $log->id,
+                        'email_type' => EmailHistory::TYPE_DOCUMENT,
+                        'type_label' => 'Document Email',
+                        'icon' => 'fas fa-file-alt text-blue-500',
+                        'subject' => 'Your documents for ' . ($log->project->name ?? 'your investment'),
+                        'recipient' => $log->recipient,
+                        'project' => $log->project,
+                        'sent_at' => $log->sent_at,
+                    ];
+                });
+
+            // Get project update emails (from updates sent)
+            $updateEmails = \App\Models\Update::whereHas('project.investments', function($query) use ($account) {
+                    $query->where('account_id', $account->id)->where('paid', 1);
+                })
+                ->where('category', 3)
+                ->where('sent', 1)
+                ->with('project')
+                ->get()
+                ->map(function($update) use ($account) {
+                    return (object)[
+                        'id' => 'update_' . $update->id,
+                        'email_type' => EmailHistory::TYPE_PROJECT_UPDATE,
+                        'type_label' => 'Project Update',
+                        'icon' => 'fas fa-bullhorn text-green-500',
+                        'subject' => 'Project Update: ' . ($update->project->name ?? 'Your Investment'),
+                        'recipient' => $account->email,
+                        'project' => $update->project,
+                        'sent_at' => $update->sent_on,
+                    ];
+                });
+
+            // Get support ticket emails
+            $ticketEmails = SupportTicket::where('account_id', $account->id)
+                ->with('project')
+                ->get()
+                ->map(function($ticket) {
+                    return (object)[
+                        'id' => 'ticket_' . $ticket->id,
+                        'email_type' => EmailHistory::TYPE_SUPPORT_TICKET,
+                        'type_label' => 'Support Ticket',
+                        'icon' => 'fas fa-headset text-purple-500',
+                        'subject' => 'Support Ticket Created - ' . $ticket->ticket_id,
+                        'recipient' => $ticket->account->email ?? '',
+                        'project' => $ticket->project,
+                        'sent_at' => $ticket->created_on,
+                    ];
+                });
+
+            // Combine and sort by date
+            $emailHistory = $documentEmails->merge($updateEmails)->merge($ticketEmails)
+                ->sortByDesc(function($email) {
+                    return $email->sent_at ? $email->sent_at->timestamp : 0;
+                })
+                ->values();
+
+            // Paginate manually
+            $perPage = 20;
+            $currentPage = request()->get('email_page', 1);
+            $items = $emailHistory->slice(($currentPage - 1) * $perPage, $perPage)->values();
+            $emailHistory = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $emailHistory->count(),
+                $perPage,
+                $currentPage,
+                ['path' => request()->url(), 'pageName' => 'email_page']
+            );
+        } catch (\Exception $e) {
+            // Tables might not exist yet
+            $emailHistory = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        }
+
         return view('investor.dashboard', compact(
             'account',
             'investments',
@@ -129,7 +244,8 @@ class InvestorDashboardController extends Controller
             'notifications',
             'unreadNotifications',
             'supportTickets',
-            'systemStatus'
+            'systemStatus',
+            'emailHistory'
         ));
     }
 

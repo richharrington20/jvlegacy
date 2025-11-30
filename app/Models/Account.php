@@ -66,6 +66,20 @@ class Account extends Authenticatable
             ->where('deleted', false);
     }
 
+    public function sharedAccounts()
+    {
+        return $this->hasMany(AccountShare::class, 'primary_account_id')
+            ->where('status', AccountShare::STATUS_ACTIVE)
+            ->where('deleted', false);
+    }
+
+    public function sharedWithMe()
+    {
+        return $this->hasMany(AccountShare::class, 'shared_account_id')
+            ->where('status', AccountShare::STATUS_ACTIVE)
+            ->where('deleted', false);
+    }
+
 
     public function getNameAttribute(): string
     {

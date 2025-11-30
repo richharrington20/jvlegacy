@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SystemStatus;
+use App\Models\SystemStatusUpdate;
 use Illuminate\Http\Request;
 
 class SystemStatusController extends Controller
@@ -152,6 +153,51 @@ class SystemStatusController extends Controller
         $status->save();
 
         return redirect()->back()->with('success', 'Status toggled successfully.');
+    }
+
+    public function addUpdate(Request $request, $id)
+    {
+        $status = SystemStatus::findOrFail($id);
+
+        $validated = $request->validate([
+            'message' => 'required|string|min:1',
+        ]);
+
+        $update = SystemStatusUpdate::create([
+            'status_id' => $status->id,
+            'account_id' => auth()->id(),
+            'message' => $validated['message'],
+            'created_on' => now(),
+            'updated_on' => now(),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'update' => $update->load('account.person', 'account.company'),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Update added successfully.');
+    }
+
+    public function markFixed(Request $request, $updateId)
+    {
+        $update = SystemStatusUpdate::findOrFail($updateId);
+        $update->is_fixed = true;
+        $update->fixed_by = auth()->id();
+        $update->fixed_on = now();
+        $update->updated_on = now();
+        $update->save();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'update' => $update->load('account.person', 'account.company', 'fixedBy.person', 'fixedBy.company'),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Status update marked as fixed.');
     }
 }
 
