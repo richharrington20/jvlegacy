@@ -17,6 +17,41 @@
                 <p class="text-sm text-gray-600 mt-1">Project ID: {{ $project->project_id }}</p>
                 <p class="text-sm text-gray-600">Status: {{ \App\Models\Project::STATUS_MAP[$project->status] ?? 'Unknown' }}</p>
             </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.projects.edit', $project->project_id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    <i class="fas fa-edit mr-2"></i>Edit Project
+                </a>
+                <a href="{{ route('admin.investments.create') }}?project_id={{ $project->project_id }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                    <i class="fas fa-plus mr-2"></i>Add Investment
+                </a>
+                <a href="{{ route('admin.updates.index') }}?project_id={{ $project->project_id }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                    <i class="fas fa-bullhorn mr-2"></i>Post Update
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-600 mb-1">Total Invested</div>
+            <div class="text-2xl font-bold text-gray-900">{!! money($totalInvested) !!}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ $investmentCount }} investment{{ $investmentCount !== 1 ? 's' : '' }}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-600 mb-1">Total Paid</div>
+            <div class="text-2xl font-bold text-green-600">{!! money($totalPaid) !!}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ $paidCount }} paid</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-600 mb-1">Total Unpaid</div>
+            <div class="text-2xl font-bold text-red-600">{!! money($totalUnpaid) !!}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ $unpaidCount }} unpaid</div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="text-sm text-gray-600 mb-1">Progress</div>
+            <div class="text-2xl font-bold text-blue-600">{{ $project->progress ?? 0 }}%</div>
+            <div class="text-xs text-gray-500 mt-1">Status: {{ \App\Models\Project::STATUS_MAP[$project->status] ?? 'Unknown' }}</div>
         </div>
     </div>
 
@@ -36,6 +71,9 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-gray-900">Investors ({{ $investors->count() }})</h2>
+            <a href="{{ route('admin.investments.create') }}?project_id={{ $project->project_id }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                <i class="fas fa-plus mr-2"></i>Add Investment
+            </a>
         </div>
 
         @if($investors->isEmpty())
@@ -99,9 +137,14 @@
     <div class="bg-white rounded shadow p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-gray-900">Project Updates</h2>
-            <a href="{{ route('admin.updates.index', ['project_id' => $project->project_id]) }}" class="text-blue-600 hover:text-blue-800 text-sm">
-                View All →
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.updates.index') }}?project_id={{ $project->project_id }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                    <i class="fas fa-plus mr-2"></i>Post Update
+                </a>
+                <a href="{{ route('admin.updates.index', ['project_id' => $project->project_id]) }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                    View All →
+                </a>
+            </div>
         </div>
 
         @if($updates->isEmpty())
@@ -137,7 +180,17 @@
 
     <!-- Documents Section -->
     <div class="bg-white rounded shadow p-6 mb-6">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Documents</h2>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Documents</h2>
+            @if($project->investorDocuments->isNotEmpty())
+                <form method="POST" action="{{ route('admin.projects.resend_documents', $project->project_id) }}" class="inline">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                        <i class="fas fa-envelope mr-2"></i>Resend All Documents
+                    </button>
+                </form>
+            @endif
+        </div>
 
         @if($project->investorDocuments->isEmpty())
             <p class="text-gray-500">No documents available for this project.</p>

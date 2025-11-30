@@ -95,12 +95,21 @@ class ProjectController extends Controller
             ->where('project_id', $projectId)
             ->firstOrFail();
 
-        // Get all investors for this project
-        $investments = Investments::with(['account.person', 'account.company'])
-            ->where('project_id', $project->project_id)
-            ->where('paid', 1)
-            ->get()
-            ->unique('account_id');
+        // Get ALL investments (paid and unpaid) for financial summary
+        $allInvestments = Investments::with(['account.person', 'account.company'])
+            ->where('project_id', $project->id)
+            ->get();
+
+        // Calculate financial summary
+        $totalInvested = $allInvestments->sum('amount');
+        $totalPaid = $allInvestments->where('paid', 1)->sum('amount');
+        $totalUnpaid = $allInvestments->where('paid', 0)->sum('amount');
+        $investmentCount = $allInvestments->count();
+        $paidCount = $allInvestments->where('paid', 1)->count();
+        $unpaidCount = $allInvestments->where('paid', 0)->count();
+
+        // Get all investors for this project (only paid investments for display)
+        $investments = $allInvestments->where('paid', 1)->unique('account_id');
 
         // Get all unique investor accounts
         $investors = $investments->map(function ($investment) {
@@ -125,13 +134,76 @@ class ProjectController extends Controller
             $documentLogs = collect();
         }
 
+        // Get all accounts for investment creation dropdown
+        $accounts = \App\Models\Account::on('legacy')
+            ->where('deleted', 0)
+            ->with('person', 'company')
+            ->orderBy('id')
+            ->limit(500)
+            ->get();
+
         return view('admin.projects.show', compact(
             'project',
             'investors',
             'investments',
+            'allInvestments',
             'updates',
-            'documentLogs'
+            'documentLogs',
+            'accounts',
+            'totalInvested',
+            'totalPaid',
+            'totalUnpaid',
+            'investmentCount',
+            'paidCount',
+            'unpaidCount'
         ));
+    }
+
+    public function edit($projectId)
+    {
+        $project = Project::where('project_id', $projectId)->firstOrFail();
+        $accounts = \App\Models\Account::on('legacy')
+            ->where('deleted', 0)
+            ->with('person', 'company')
+            ->orderBy('id')
+            ->limit(500)
+            ->get();
+        
+        return view('admin.projects.edit', compact('project', 'accounts'));
+    }
+
+    public function update(Request $request, $projectId)
+    {
+        $project = Project::where('project_id', $projectId)->firstOrFail();
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'account_id' => 'required|exists:legacy.accounts,id',
+            'status' => 'nullable|integer',
+            'progress' => 'nullable|integer|min:0|max:100',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
+
+        $project->name = $validated['name'];
+        $project->description = $validated['description'] ?? '';
+        $project->account_id = $validated['account_id'];
+        $project->status = $validated['status'] ?? $project->status;
+        $project->progress = $validated['progress'] ?? $project->progress;
+        $project->updated_on = now();
+        $project->save();
+
+        // Handle image upload if provided
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = $project->project_id . '_' . time() . '_' . $image->getClientOriginalName();
+            $imagePath = $image->storeAs('projects', $imageName, 'public');
+            $project->image_path = $imagePath;
+            $project->save();
+        }
+
+        return redirect()->route('admin.projects.show', $project->project_id)
+            ->with('success', 'Project updated successfully.');
     }
 
     public function resendDocuments(Request $request, $projectId)

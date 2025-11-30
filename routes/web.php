@@ -60,6 +60,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
     Route::get('/projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{projectId}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{projectId}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+    Route::put('/projects/{projectId}', [ProjectController::class, 'update'])->name('projects.update');
     Route::post('/projects/{projectId}/resend-documents', [ProjectController::class, 'resendDocuments'])->name('projects.resend_documents');
     
     // Document tracing for a specific project
