@@ -403,6 +403,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
 
 });
 
+// Alias for 'login' route (for middleware redirects)
+Route::get('login', function () {
+    return redirect()->route('investor.login');
+})->name('login');
+
 Route::prefix('investor')->name('investor.')->group(function () {
     Route::get('login', [InvestorAuthController::class, 'showLogin'])->name('login');
     Route::post('login', [InvestorAuthController::class, 'login'])->name('login.post');
