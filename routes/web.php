@@ -569,6 +569,65 @@ Route::get('/run-migrations', function () {
     }
 })->name('run.migrations');
 
+// One-time route to run system status migration
+Route::get('/run-system-status-migration', function () {
+    try {
+        $filePath = database_path('migrations_sql/005_create_system_status_table.sql');
+        
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'File not found: ' . $filePath,
+            ], 404);
+        }
+        
+        $sql = file_get_contents($filePath);
+        
+        // Split SQL into individual statements
+        $statements = array_filter(
+            array_map('trim', explode(';', $sql)),
+            function($stmt) {
+                $stmt = trim($stmt);
+                return !empty($stmt) && 
+                       !preg_match('/^--/', $stmt) &&
+                       !preg_match('/^\/\*/', $stmt) &&
+                       strlen($stmt) > 10;
+            }
+        );
+        
+        $executed = 0;
+        $errors = [];
+        
+        foreach ($statements as $statement) {
+            try {
+                \DB::connection('legacy')->statement($statement);
+                $executed++;
+            } catch (\Exception $e) {
+                if (str_contains($e->getMessage(), 'already exists') || 
+                    str_contains($e->getMessage(), 'Duplicate')) {
+                    $executed++;
+                } else {
+                    $errors[] = $e->getMessage();
+                }
+            }
+        }
+        
+        return response()->json([
+            'success' => empty($errors),
+            'message' => 'System status table migration completed!',
+            'statements_executed' => $executed,
+            'errors' => $errors,
+        ], 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+})->name('run.system.status.migration');
+
 // One-time route to run document migrations (remove after use)
 Route::get('/run-document-migrations', function () {
     try {
