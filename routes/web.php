@@ -210,6 +210,10 @@ Route::prefix('investor')->name('investor.')->group(function () {
             Route::post('/projects/{project}/documents/email', [InvestorDocumentController::class, 'email'])->name('documents.email');
             Route::post('/notifications/{notification}/read', [InvestorNotificationController::class, 'markRead'])->name('notifications.read');
             Route::post('/notifications/mark-all-read', [InvestorNotificationController::class, 'markAllRead'])->name('notifications.read_all');
+            Route::get('/support/tickets', [InvestorSupportController::class, 'index'])->name('support.index');
+            Route::get('/support/tickets/{ticketId}', [InvestorSupportController::class, 'show'])->name('support.show');
+            Route::post('/support/tickets', [InvestorSupportController::class, 'store'])->name('support.store');
+            Route::post('/support/tickets/{ticketId}/reply', [InvestorSupportController::class, 'reply'])->name('support.reply');
             Route::post('/projects/{project}/support', [InvestorSupportController::class, 'store'])->name('support.store');
     });
 });

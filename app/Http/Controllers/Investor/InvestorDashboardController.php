@@ -7,6 +7,8 @@ use App\Models\DocumentEmailLog;
 use App\Models\InvestorNotification;
 use App\Models\Project;
 use App\Models\ProjectQuarterlyIncomePayee;
+use App\Models\SupportTicket;
+use App\Models\SystemStatus;
 use Illuminate\Http\Request;
 
 class InvestorDashboardController extends Controller
@@ -96,6 +98,26 @@ class InvestorDashboardController extends Controller
             $unreadNotifications = 0;
         }
 
+        // Get support tickets
+        try {
+            $supportTickets = SupportTicket::where('account_id', $account->id)
+                ->where('deleted', false)
+                ->with(['project', 'replies'])
+                ->orderByDesc('created_on')
+                ->get();
+        } catch (\Exception $e) {
+            $supportTickets = collect();
+        }
+
+        // Get system status
+        try {
+            $systemStatus = SystemStatus::forLogin()
+                ->orderByDesc('created_on')
+                ->first();
+        } catch (\Exception $e) {
+            $systemStatus = null;
+        }
+
         return view('investor.dashboard', compact(
             'account',
             'investments',
@@ -105,7 +127,9 @@ class InvestorDashboardController extends Controller
             'projectPayouts',
             'projectTimelines',
             'notifications',
-            'unreadNotifications'
+            'unreadNotifications',
+            'supportTickets',
+            'systemStatus'
         ));
     }
 

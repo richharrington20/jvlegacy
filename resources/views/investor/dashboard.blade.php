@@ -131,6 +131,18 @@
                         </span>
                     @endif
                 </button>
+                <button 
+                    @click="activeTab = 'helpdesk'"
+                    :class="activeTab === 'helpdesk' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors relative"
+                >
+                    <i class="fas fa-headset mr-2"></i>Helpdesk
+                    @if(isset($supportTickets) && $supportTickets->where('status', 'open')->count() > 0)
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            {{ $supportTickets->where('status', 'open')->count() }}
+                        </span>
+                    @endif
+                </button>
             </nav>
         </div>
 
@@ -179,33 +191,76 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold mb-4">Quick Summary</h3>
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-900">Welcome to Your Dashboard</h3>
                     <p class="text-gray-700 mb-4">
-                        Here's your investor dashboard. From here, you'll be able to view your investment history,
-                        download documents, track payouts, and raise support tickets.
+                        Your central hub for managing investments, accessing documents, tracking payouts, and getting support. 
+                        Everything you need is just a click away.
                     </p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <a href="#investments" @click="activeTab = 'investments'" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <a href="#investments" @click="activeTab = 'investments'" class="p-4 bg-white rounded-lg border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all">
                             <div class="flex items-center">
-                                <i class="fas fa-chart-line text-blue-600 text-2xl mr-4"></i>
+                                <div class="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-chart-line text-blue-600"></i>
+                                </div>
                                 <div>
-                                    <p class="font-semibold text-gray-900">View Investments</p>
-                                    <p class="text-sm text-gray-600">See all your investment details</p>
+                                    <p class="font-semibold text-gray-900 text-sm">Investments</p>
+                                    <p class="text-xs text-gray-600">View portfolio</p>
                                 </div>
                             </div>
                         </a>
-                        <a href="#documents" @click="activeTab = 'documents'" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <a href="#documents" @click="activeTab = 'documents'" class="p-4 bg-white rounded-lg border border-green-100 hover:border-green-300 hover:shadow-md transition-all">
                             <div class="flex items-center">
-                                <i class="fas fa-file-alt text-green-600 text-2xl mr-4"></i>
+                                <div class="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-file-alt text-green-600"></i>
+                                </div>
                                 <div>
-                                    <p class="font-semibold text-gray-900">Access Documents</p>
-                                    <p class="text-sm text-gray-600">Download your investment documents</p>
+                                    <p class="font-semibold text-gray-900 text-sm">Documents</p>
+                                    <p class="text-xs text-gray-600">Download files</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#helpdesk" @click="activeTab = 'helpdesk'" class="p-4 bg-white rounded-lg border border-purple-100 hover:border-purple-300 hover:shadow-md transition-all">
+                            <div class="flex items-center">
+                                <div class="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-headset text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-900 text-sm">Get Help</p>
+                                    <p class="text-xs text-gray-600">Support tickets</p>
                                 </div>
                             </div>
                         </a>
                     </div>
                 </div>
+
+                @if(count($investments) > 0)
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+                        <div class="space-y-3">
+                            @php
+                                $recentUpdates = collect();
+                                foreach ($projectUpdates as $updates) {
+                                    $recentUpdates = $recentUpdates->merge($updates->items());
+                                }
+                                $recentUpdates = $recentUpdates->sortByDesc('sent_on')->take(3);
+                            @endphp
+                            @if($recentUpdates->count() > 0)
+                                @foreach($recentUpdates as $update)
+                                    <div class="flex items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                        <i class="fas fa-bullhorn text-blue-500 mt-1 mr-3"></i>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">Project Update</p>
+                                            <p class="text-xs text-gray-500 mt-1">{{ $update->sent_on ? $update->sent_on->format('d M Y') : '' }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <p class="text-sm text-gray-500">No recent activity</p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <!-- Investments Tab -->
@@ -538,6 +593,141 @@ function updateModal() {
         close() {
             this.open = false;
             this.update = null;
+        }
+    }
+}
+
+function helpdeskData() {
+    return {
+        tickets: @json($supportTickets ?? []),
+        selectedTicket: null,
+        newTicket: {
+            subject: '',
+            message: '',
+            project_id: ''
+        },
+        replyMessages: {},
+        creatingTicket: false,
+        sendingReply: null,
+        ticketCreated: false,
+        successMessage: '',
+        loading: false,
+        
+        async createTicket() {
+            this.creatingTicket = true;
+            try {
+                const response = await fetch('{{ route("investor.support.store") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(this.newTicket)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.successMessage = `Support ticket created successfully! Your ticket ID is: <strong>${data.ticket.ticket_id}</strong>`;
+                    this.ticketCreated = true;
+                    this.newTicket = { subject: '', message: '', project_id: '' };
+                    await this.loadTickets();
+                    // Auto-select the new ticket
+                    setTimeout(() => {
+                        this.selectedTicket = data.ticket;
+                        const chatContainer = document.querySelector('[x-show="selectedTicket?.id === ticket.id"]');
+                        if (chatContainer) {
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }
+                    }, 100);
+                } else {
+                    alert('Error creating ticket: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error creating ticket: ' + error.message);
+            } finally {
+                this.creatingTicket = false;
+            }
+        },
+        
+        async sendReply(ticketId) {
+            if (!this.replyMessages[ticketId] || !this.replyMessages[ticketId].trim()) return;
+            
+            this.sendingReply = ticketId;
+            try {
+                const response = await fetch(`/investor/support/tickets/${this.selectedTicket.ticket_id}/reply`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ message: this.replyMessages[ticketId] })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.replyMessages[ticketId] = '';
+                    await this.loadTickets();
+                    // Scroll to bottom
+                    setTimeout(() => {
+                        const chatContainer = document.querySelector('[x-show="selectedTicket?.id === ticket.id"] .max-h-96');
+                        if (chatContainer) {
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }
+                    }, 100);
+                } else {
+                    alert('Error sending reply: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error sending reply: ' + error.message);
+            } finally {
+                this.sendingReply = null;
+            }
+        },
+        
+        async loadTickets() {
+            this.loading = true;
+            try {
+                const response = await fetch('{{ route("investor.support.index") }}', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                this.tickets = data;
+                
+                // Restore selected ticket if it exists
+                if (this.selectedTicket) {
+                    const found = this.tickets.find(t => t.id === this.selectedTicket.id);
+                    if (found) {
+                        this.selectedTicket = found;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            
+            return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
     }
 }
