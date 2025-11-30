@@ -10,9 +10,14 @@ class SystemStatusController extends Controller
 {
     public function index()
     {
-        $statuses = SystemStatus::where('deleted', false)
-            ->orderByDesc('created_on')
-            ->paginate(20);
+        try {
+            $statuses = SystemStatus::where('deleted', false)
+                ->orderByDesc('created_on')
+                ->paginate(20);
+        } catch (\Exception $e) {
+            // Table doesn't exist yet
+            $statuses = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+        }
 
         return view('admin.system-status.index', compact('statuses'));
     }

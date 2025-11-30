@@ -18,8 +18,13 @@ class InvestorAuthController extends Controller
                 ->orderByDesc('created_on')
                 ->first();
         } catch (\Exception $e) {
-            // Table doesn't exist yet
-            $systemStatus = null;
+            // Table doesn't exist yet - check if it's a table not found error
+            if (str_contains($e->getMessage(), "Table 'jvsys.system_status' doesn't exist")) {
+                $systemStatus = null;
+            } else {
+                // Re-throw if it's a different error
+                throw $e;
+            }
         }
         
         return view('investor.auth.login', compact('systemStatus'));
