@@ -70,6 +70,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
     Route::post('/system-status/{id}/toggle', [SystemStatusController::class, 'toggle'])->name('system-status.toggle');
     Route::post('/system-status/{id}/add-update', [SystemStatusController::class, 'addUpdate'])->name('system-status.add-update');
     Route::post('/system-status-updates/{updateId}/mark-fixed', [SystemStatusController::class, 'markFixed'])->name('system-status-updates.mark-fixed');
+    
+    // Migration routes (accessible from admin)
+    Route::get('/run-system-status-updates-migration', function () {
+        return redirect('/run-system-status-updates-migration');
+    })->name('admin.run-system-status-updates-migration');
+    Route::get('/run-email-history-migration', function () {
+        return redirect('/run-email-history-migration');
+    })->name('admin.run-email-history-migration');
 
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
