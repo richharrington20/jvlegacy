@@ -553,6 +553,44 @@
         </div>
     </div>
 
+    <!-- System Status Widget -->
+    @if(isset($systemStatus) && $systemStatus)
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 mb-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    @if($systemStatus->status_type === 'error')
+                        <i class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
+                    @elseif($systemStatus->status_type === 'warning')
+                        <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                    @elseif($systemStatus->status_type === 'success')
+                        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                    @elseif($systemStatus->status_type === 'maintenance')
+                        <i class="fas fa-tools text-orange-500 text-2xl"></i>
+                    @else
+                        <i class="fas fa-info-circle text-blue-500 text-2xl"></i>
+                    @endif
+                </div>
+                <div class="ml-4 flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-base font-semibold text-gray-900">
+                            {{ $systemStatus->title }}
+                        </h3>
+                        <span class="text-xs text-gray-500">
+                            @if($systemStatus->created_on)
+                                {{ \Carbon\Carbon::parse($systemStatus->created_on)->format('d M Y, H:i') }}
+                            @elseif($systemStatus->updated_on)
+                                {{ \Carbon\Carbon::parse($systemStatus->updated_on)->format('d M Y, H:i') }}
+                            @endif
+                        </span>
+                    </div>
+                    <div class="text-sm text-gray-700">
+                        {!! $systemStatus->message !!}
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Update Modal -->
     <div x-show="open" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center" x-data="updateModal()">
         <div class="absolute inset-0 bg-black opacity-50" @click="close"></div>
