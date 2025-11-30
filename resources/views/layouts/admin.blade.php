@@ -174,7 +174,6 @@
                             ];
                             
                             $path = '';
-                            $processedSegments = [];
                             
                             foreach ($routeSegments as $index => $segment) {
                                 if ($segment === 'admin') continue;
@@ -193,6 +192,31 @@
                                     if ($routeSegments[$j] !== 'admin' && !is_numeric($routeSegments[$j])) {
                                         $isLast = false;
                                         break;
+                                    }
+                                }
+                                
+                                // For show/edit routes, try to get the model name
+                                if (($segment === 'show' || $segment === 'edit') && $isLast) {
+                                    $routeParams = request()->route()->parameters();
+                                    foreach ($routeParams as $paramName => $paramValue) {
+                                        // Try to get model name from route parameter
+                                        if (in_array($paramName, ['project', 'investment', 'account', 'update', 'id'])) {
+                                            try {
+                                                if ($paramName === 'project' || (str_contains($currentRoute, 'projects') && $paramName === 'id')) {
+                                                    $project = \App\Models\Project::where('project_id', $paramValue)->first();
+                                                    if ($project) {
+                                                        $label = $project->name;
+                                                    }
+                                                } elseif ($paramName === 'account' || (str_contains($currentRoute, 'accounts') && $paramName === 'id')) {
+                                                    $account = \App\Models\Account::find($paramValue);
+                                                    if ($account) {
+                                                        $label = $account->name;
+                                                    }
+                                                }
+                                            } catch (\Exception $e) {
+                                                // Ignore errors
+                                            }
+                                        }
                                     }
                                 }
                                 
