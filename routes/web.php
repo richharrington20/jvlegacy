@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\InvestmentController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ProjectDocumentController;
 use App\Http\Controllers\Admin\UpdateController;
+use App\Http\Controllers\Admin\UpdateImageController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\Investor\InvestorDashboardController;
 use App\Http\Controllers\Investor\InvestorDocumentController;
@@ -51,6 +52,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
     Route::get('/updates/{id}/edit', [UpdateController::class, 'edit'])->name('updates.edit');
     Route::put('/updates/{id}', [UpdateController::class, 'update'])->name('updates.update');
     Route::delete('/updates/{id}', [UpdateController::class, 'destroy'])->name('updates.destroy');
+    
+    // Update images
+    Route::delete('/update-images/{imageId}', [UpdateImageController::class, 'delete'])->name('update-images.delete');
+    Route::post('/update-images/reorder', [UpdateImageController::class, 'reorder'])->name('update-images.reorder');
+    Route::put('/update-images/{imageId}/description', [UpdateImageController::class, 'updateDescription'])->name('update-images.update-description');
 
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/accounts/{id}', [AccountController::class, 'show'])->name('accounts.show');

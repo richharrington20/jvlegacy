@@ -47,6 +47,13 @@ class Update extends Model
         return $this->belongsTo(Project::class, 'project_id', 'project_id');
     }
 
+    public function images()
+    {
+        return $this->hasMany(UpdateImage::class, 'update_id')
+            ->where('deleted', false)
+            ->orderBy('display_order');
+    }
+
     // Optional: scope for recent updates
     public function scopeRecent($query, $limit = 5)
     {

@@ -18,20 +18,25 @@
             <form method="POST" action="{{ route('admin.updates.store') }}" id="update-form" class="space-y-4" enctype="multipart/form-data">
                 @csrf
                 <div class="flex flex-wrap gap-4">
-                    <div class="w-full md:w-1/2">
+                    <div class="w-full">
                         <label class="block text-sm font-medium mb-1 text-gray-700">Project <span class="text-red-500">*</span></label>
-                        <select name="project_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <select name="project_id" id="project-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                             <option value="" hidden>Select Project</option>
                             @foreach ($projects as $proj)
                                 @if ($proj->project_id)
-                                    <option value="{{ $proj->project_id }}">{{ $proj->project_id }} – {{ $proj->name }}</option>
+                                    <option value="{{ $proj->project_id }}" @selected($selectedProjectId == $proj->project_id)>
+                                        {{ $proj->project_id }} – {{ $proj->name }}
+                                    </option>
                                 @endif
                             @endforeach
                         </select>
                     </div>
-                    <div class="w-full md:w-1/2">
-                        <label class="block text-sm font-medium mb-1 text-gray-700">Image (optional)</label>
-                        <input type="file" name="image" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <div class="w-full">
+                        <label class="block text-sm font-medium mb-1 text-gray-700">Images (optional - multiple allowed)</label>
+                        <input type="file" name="images[]" accept="image/*" multiple id="image-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">You can select multiple images. They will be automatically resized and you can add descriptions and reorder them after upload.</p>
+                        <div id="image-preview-container" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                        <div id="image-descriptions-container" class="mt-4 space-y-2"></div>
                     </div>
                 </div>
                 <div>
@@ -82,6 +87,7 @@
     <!-- Quill.js CDN -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var quill = new Quill('#quill-editor', {
@@ -91,6 +97,45 @@
             var form = document.getElementById('update-form');
             form.addEventListener('submit', function (e) {
                 document.getElementById('comment-input').value = quill.root.innerHTML;
+            });
+
+            // Auto-select project from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            if (projectId) {
+                document.getElementById('project-select').value = projectId;
+            }
+
+            // Handle multiple image previews
+            const imageInput = document.getElementById('image-input');
+            const previewContainer = document.getElementById('image-preview-container');
+            const descriptionsContainer = document.getElementById('image-descriptions-container');
+            let imageFiles = [];
+
+            imageInput.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                imageFiles = files;
+                
+                previewContainer.innerHTML = '';
+                descriptionsContainer.innerHTML = '';
+
+                files.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'relative border border-gray-300 rounded-lg overflow-hidden';
+                        div.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-32 object-cover" alt="Preview">
+                            <div class="p-2 bg-gray-50">
+                                <p class="text-xs text-gray-600 truncate">${file.name}</p>
+                                <input type="text" name="image_descriptions[]" placeholder="Image description (optional)" 
+                                       class="mt-1 w-full px-2 py-1 text-xs border border-gray-300 rounded">
+                            </div>
+                        `;
+                        previewContainer.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
             });
         });
     </script>
