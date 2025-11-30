@@ -45,9 +45,10 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Message (Full WYSIWYG Editor)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message (Full WYSIWYG Editor) <span class="text-red-500">*</span></label>
                     <div id="message-editor" class="bg-white border border-gray-300 rounded-lg" style="min-height: 300px;"></div>
-                    <textarea name="message" id="message-input" class="hidden" required>{{ old('message', $status->message) }}</textarea>
+                    <textarea name="message" id="message-input" class="hidden">{{ old('message', $status->message) }}</textarea>
+                    <p class="text-xs text-red-600 mt-1 hidden" id="message-error">Please enter a message for the system status.</p>
                 </div>
 
                 <div class="flex items-center space-x-6">
@@ -105,8 +106,50 @@
             quill.root.innerHTML = {!! json_encode(old('message', $status->message)) !!};
 
             // Update hidden textarea before form submit
-            document.querySelector('form').addEventListener('submit', function() {
-                document.getElementById('message-input').value = quill.root.innerHTML;
+            var form = document.querySelector('form');
+            var messageInput = document.getElementById('message-input');
+            var messageError = document.getElementById('message-error');
+            
+            form.addEventListener('submit', function(e) {
+                var content = quill.root.innerHTML;
+                var textContent = quill.getText().trim();
+                
+                // Check if editor has meaningful content
+                if (!textContent || textContent === '') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    messageError.classList.remove('hidden');
+                    quill.focus();
+                    // Scroll to editor
+                    document.getElementById('message-editor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+                
+                // Hide error if content exists
+                messageError.classList.add('hidden');
+                
+                // Update hidden textarea with HTML content
+                messageInput.value = content;
+                
+                // Remove any validation attributes that might cause issues
+                messageInput.removeAttribute('required');
+                
+                // Show loading state
+                var submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+                }
+                
+                return true;
+            });
+            
+            // Clear error when user starts typing
+            quill.on('text-change', function() {
+                var textContent = quill.getText().trim();
+                if (textContent && textContent !== '') {
+                    messageError.classList.add('hidden');
+                }
             });
         });
     </script>
