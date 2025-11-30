@@ -169,7 +169,7 @@ class InvestmentController extends Controller
             'project_id' => 'required|exists:legacy.projects,project_id',
             'account_id' => 'required|exists:legacy.accounts,id',
             'amount' => 'required|numeric|min:0',
-            'type' => 'nullable|in:0,1',
+            'type' => 'nullable|in:1,2', // 1 for Debt, 2 for Mezzanine
             'paid' => 'nullable|boolean',
             'transfer_id' => 'nullable|integer|min:1',
             'pay_in_id' => 'nullable|integer|min:1',
@@ -178,13 +178,11 @@ class InvestmentController extends Controller
         // Get the project's internal ID
         $project = Project::where('project_id', $validated['project_id'])->firstOrFail();
 
-        $project = Project::where('project_id', $validated['project_id'])->firstOrFail();
-
         $investment->update([
             'project_id' => $project->id,
             'account_id' => $validated['account_id'],
             'amount' => (int)($validated['amount'] * 100),
-            'type' => $validated['type'] ?? 0,
+            'type' => $validated['type'] ?? 1, // Default to Debt
             'paid' => $validated['paid'] ? 1 : 0,
             'transfer_id' => !empty($validated['transfer_id']) ? $validated['transfer_id'] : null,
             'pay_in_id' => !empty($validated['pay_in_id']) ? $validated['pay_in_id'] : null,

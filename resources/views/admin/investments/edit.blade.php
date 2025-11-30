@@ -64,8 +64,8 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Type</label>
                     <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        <option value="0" @selected($investment->type == 0)>Equity</option>
                         <option value="1" @selected($investment->type == 1)>Debt</option>
+                        <option value="2" @selected($investment->type == 2)>Mezzanine</option>
                     </select>
                 </div>
 
