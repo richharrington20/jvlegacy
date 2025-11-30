@@ -146,6 +146,22 @@
                 </a>
             </div>
         </form>
+        
+        <script>
+        // Ensure empty number inputs don't send values
+        document.querySelector('form[action="{{ route('admin.investments.store') }}"]').addEventListener('submit', function(e) {
+            const transferId = this.querySelector('input[name="transfer_id"]');
+            const payInId = this.querySelector('input[name="pay_in_id"]');
+            
+            // Clear value if empty or 0
+            if (transferId && (!transferId.value || transferId.value === '0' || transferId.value === 0)) {
+                transferId.value = '';
+            }
+            if (payInId && (!payInId.value || payInId.value === '0' || payInId.value === 0)) {
+                payInId.value = '';
+            }
+        });
+        </script>
     </div>
 
     @if ($errors->any())
