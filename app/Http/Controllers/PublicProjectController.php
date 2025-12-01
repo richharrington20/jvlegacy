@@ -8,21 +8,9 @@ class PublicProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::with('property')
-            ->whereIn('status', [
-                Project::STATUS_PENDING_EQUITY,
-                Project::STATUS_PENDING_PURCHASE,
-                Project::STATUS_PENDING_CONSTRUCTION,
-                Project::STATUS_UNDER_CONSTRUCTION,
-                Project::STATUS_PENDING_SALE,
-                Project::STATUS_PENDING_REMORTGAGE,
-                Project::STATUS_PENDING_LET,
-                Project::STATUS_ON_MARKET,
-            ])
-            ->orderByDesc('launched_on')
-            ->paginate(9);
-
-        return view('projects.index', compact('projects'));
+        // Public opportunities listing has been retired.
+        // Redirect any direct hits back to the homepage.
+        return redirect()->route('home');
     }
 
     public function show($projectId)

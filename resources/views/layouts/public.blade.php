@@ -35,8 +35,6 @@
             </a>
             <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-700">
                 <a href="{{ route('home') }}" class="hover:text-blue-600 transition-colors">Home</a>
-                <a href="{{ route('public.projects.index') }}" class="hover:text-blue-600 transition-colors">Opportunities</a>
-                <a href="#faq" class="hover:text-blue-600 transition-colors">FAQ</a>
                 <a href="{{ route('investor.login') }}" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
                     <i class="fas fa-sign-in-alt mr-2"></i>Investor Login
                 </a>
@@ -49,8 +47,6 @@
         <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white">
             <nav class="px-6 py-4 space-y-3">
                 <a href="{{ route('home') }}" class="block text-gray-700 hover:text-blue-600 font-medium">Home</a>
-                <a href="{{ route('public.projects.index') }}" class="block text-gray-700 hover:text-blue-600 font-medium">Opportunities</a>
-                <a href="#faq" class="block text-gray-700 hover:text-blue-600 font-medium">FAQ</a>
                 <a href="{{ route('investor.login') }}" class="block px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold text-center">Investor Login</a>
             </nav>
         </div>
@@ -80,7 +76,6 @@
             <div>
                 <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-4">Investing</p>
                 <ul class="space-y-3">
-                    <li><a href="{{ route('public.projects.index') }}" class="text-sm hover:text-white transition-colors">Projects</a></li>
                     <li><a href="{{ route('investor.login') }}" class="text-sm hover:text-white transition-colors">Investor Login</a></li>
                 </ul>
             </div>
