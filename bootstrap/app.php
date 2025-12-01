@@ -12,7 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         // Custom route middleware
-        $middleware->alias('admin.investor', \App\Http\Middleware\AdminInvestorMiddleware::class);
+        $middleware->alias([
+            'admin.investor' => \App\Http\Middleware\AdminInvestorMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
