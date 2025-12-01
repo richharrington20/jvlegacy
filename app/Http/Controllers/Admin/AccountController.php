@@ -247,7 +247,7 @@ class AccountController extends Controller
                 $person = \App\Models\Person::create([
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
-                    'telephone_number' => $request->telephone_number,
+                    'telephone_number' => $request->telephone_number ?? '',
                     'email' => $request->email,
                     'created_on' => now(),
                     'updated_on' => now(),
