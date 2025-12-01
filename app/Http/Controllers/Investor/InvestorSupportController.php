@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SupportTicketConfirmationMail;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketReply;
 use App\Models\Project;
@@ -89,14 +90,9 @@ class InvestorSupportController extends Controller
 
         // Send confirmation email
         try {
-            Mail::send('emails.support_ticket_confirmation', [
-                'ticket' => $ticket,
-                'account' => $account,
-                'project' => $project,
-            ], function ($message) use ($account, $ticket) {
-                $message->to($account->email, $account->name)
-                    ->subject("Support Ticket Created - {$ticket->ticket_id}");
-            });
+            Mail::to($account->email)->send(
+                new SupportTicketConfirmationMail($account, $ticket)
+            );
         } catch (\Exception $e) {
             Log::error('Failed to send support ticket confirmation email: ' . $e->getMessage());
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AccountShareNotificationMail;
 use App\Models\Account;
 use App\Models\AccountShare;
 use Illuminate\Http\Request;
@@ -94,14 +95,10 @@ class AccountShareController extends Controller
 
         // Send notification email (optional)
         try {
-            Mail::send('emails.account_share_notification', [
-                'primaryAccount' => $account,
-                'sharedAccount' => $sharedAccount,
-                'share' => $share,
-            ], function ($message) use ($sharedAccount) {
-                $message->to($sharedAccount->email, $sharedAccount->name)
-                    ->subject('Account Access Shared - JaeVee');
-            });
+            $acceptUrl = route('investor.dashboard') . '#account-sharing';
+            Mail::to($sharedAccount->email)->send(
+                new AccountShareNotificationMail($account, $sharedAccount, $acceptUrl)
+            );
         } catch (\Exception $e) {
             Log::error('Failed to send account share notification email: ' . $e->getMessage());
         }

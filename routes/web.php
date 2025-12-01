@@ -1309,6 +1309,354 @@ Route::get('/run-email-templates-migration', function () {
     }
 })->name('run.email.templates.migration');
 
+// One-time route to seed initial email templates
+Route::get('/seed-email-templates', function () {
+    try {
+        $templates = [
+            [
+                'key' => 'welcome_investor',
+                'name' => 'Welcome Email',
+                'subject' => 'Welcome to JaeVee',
+                'body_html' => '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to JaeVee</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Welcome to JaeVee</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Hello {{name}},</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Welcome to JaeVee! We\'re excited to have you on board.</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">You can now access your investor dashboard to view your investments, documents, and project updates.</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{dashboard_url}}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Access Your Dashboard</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin: 20px 0 0; color: #666666; font-size: 14px; line-height: 1.6;">If you have any questions, please don\'t hesitate to contact our support team.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">© ' . date('Y') . ' JaeVee. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>',
+                'body_text' => "Welcome to JaeVee\n\nHello {{name}},\n\nWelcome to JaeVee! We're excited to have you on board.\n\nYou can now access your investor dashboard to view your investments, documents, and project updates.\n\nAccess your dashboard: {{dashboard_url}}\n\nIf you have any questions, please don't hesitate to contact our support team.\n\n© " . date('Y') . " JaeVee. All rights reserved.",
+            ],
+            [
+                'key' => 'password_reset',
+                'name' => 'Password Reset',
+                'subject' => 'Reset Your Password',
+                'body_html' => '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Your Password</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Reset Your Password</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Hello {{name}},</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">We received a request to reset your password for your JaeVee account.</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Click the button below to reset your password. This link will expire in {{expires_in}}.</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{reset_url}}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Reset Password</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin: 20px 0 0; color: #666666; font-size: 14px; line-height: 1.6;">If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">© ' . date('Y') . ' JaeVee. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>',
+                'body_text' => "Reset Your Password\n\nHello {{name}},\n\nWe received a request to reset your password for your JaeVee account.\n\nClick the link below to reset your password. This link will expire in {{expires_in}}.\n\n{{reset_url}}\n\nIf you did not request a password reset, please ignore this email or contact support if you have concerns.\n\n© " . date('Y') . " JaeVee. All rights reserved.",
+            ],
+            [
+                'key' => 'project_update',
+                'name' => 'Project Update',
+                'subject' => 'New Update: {{project_name}}',
+                'body_html' => '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Update</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Project Update</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Hello {{name}},</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">We have a new update for <strong>{{project_name}}</strong>.</p>
+                            <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
+                                <div style="color: #333333; font-size: 16px; line-height: 1.8;">{{update_content}}</div>
+                            </div>
+                            <p style="margin: 20px 0; color: #666666; font-size: 14px;">Update posted on {{update_date}}</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{project_url}}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Full Update</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">© ' . date('Y') . ' JaeVee. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>',
+                'body_text' => "Project Update\n\nHello {{name}},\n\nWe have a new update for {{project_name}}.\n\n{{update_content}}\n\nUpdate posted on {{update_date}}\n\nView full update: {{project_url}}\n\n© " . date('Y') . " JaeVee. All rights reserved.",
+            ],
+            [
+                'key' => 'support_ticket_confirmation',
+                'name' => 'Support Ticket Confirmation',
+                'subject' => 'Support Ticket Created - {{ticket_id}}',
+                'body_html' => '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Ticket Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Support Ticket Created</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Hello {{name}},</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Thank you for contacting us. We\'ve received your support request and our team will get back to you as soon as possible.</p>
+                            <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
+                                <p style="margin: 0 0 10px; color: #333333; font-size: 14px; font-weight: 600;">Ticket ID: {{ticket_id}}</p>
+                                <p style="margin: 0 0 10px; color: #333333; font-size: 14px; font-weight: 600;">Subject: {{subject}}</p>
+                                <p style="margin: 10px 0 0; color: #666666; font-size: 14px; line-height: 1.6;">{{message}}</p>
+                            </div>
+                            <p style="margin: 20px 0; color: #666666; font-size: 14px; line-height: 1.6;">You\'ll receive email updates when we respond to your ticket.</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{dashboard_url}}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Ticket</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">© ' . date('Y') . ' JaeVee. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>',
+                'body_text' => "Support Ticket Confirmation\n\nHello {{name}},\n\nThank you for contacting us. We've received your support request and our team will get back to you as soon as possible.\n\nTicket ID: {{ticket_id}}\nSubject: {{subject}}\n\n{{message}}\n\nYou'll receive email updates when we respond to your ticket.\n\nView ticket: {{dashboard_url}}\n\n© " . date('Y') . " JaeVee. All rights reserved.",
+            ],
+            [
+                'key' => 'account_share_notification',
+                'name' => 'Account Share Notification',
+                'subject' => 'Account Access Shared - JaeVee',
+                'body_html' => '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Access Shared</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Account Access Shared</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Hello {{name}},</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;"><strong>{{primary_account_name}}</strong> has shared their investment account access with you.</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">You can now view their investments, documents, and project updates in your dashboard.</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{dashboard_url}}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Dashboard</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">© ' . date('Y') . ' JaeVee. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>',
+                'body_text' => "Account Access Shared\n\nHello {{name}},\n\n{{primary_account_name}} has shared their investment account access with you.\n\nYou can now view their investments, documents, and project updates in your dashboard.\n\nView dashboard: {{dashboard_url}}\n\n© " . date('Y') . " JaeVee. All rights reserved.",
+            ],
+            [
+                'key' => 'project_documents',
+                'name' => 'Project Documents',
+                'subject' => 'Your Documents for {{project_name}}',
+                'body_html' => '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Project Documents</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Your Project Documents</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Hello {{name}},</p>
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Your documents for <strong>{{project_name}}</strong> are ready for download.</p>
+                            <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 6px;">
+                                {{documents_list}}
+                            </div>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{dashboard_url}}" style="display: inline-block; padding: 14px 32px; background-color: #667eea; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Dashboard</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">© ' . date('Y') . ' JaeVee. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>',
+                'body_text' => "Your Project Documents\n\nHello {{name}},\n\nYour documents for {{project_name}} are ready for download.\n\n{{documents_list_text}}\n\nView dashboard: {{dashboard_url}}\n\n© " . date('Y') . " JaeVee. All rights reserved.",
+            ],
+        ];
+
+        $created = 0;
+        $skipped = 0;
+
+        foreach ($templates as $template) {
+            $exists = \DB::connection('legacy')
+                ->table('email_templates')
+                ->where('key', $template['key'])
+                ->where('deleted', 0)
+                ->exists();
+
+            if (!$exists) {
+                \DB::connection('legacy')->table('email_templates')->insert([
+                    'key' => $template['key'],
+                    'name' => $template['name'],
+                    'subject' => $template['subject'],
+                    'body_html' => $template['body_html'],
+                    'body_text' => $template['body_text'],
+                    'created_on' => now(),
+                    'updated_on' => now(),
+                    'deleted' => 0,
+                ]);
+                $created++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Email templates seeded. Created: {$created}, Skipped: {$skipped}",
+            'created' => $created,
+            'skipped' => $skipped,
+        ], 200, [], JSON_PRETTY_PRINT);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error seeding email templates.',
+            'error' => $e->getMessage(),
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+})->name('seed.email.templates');
+
 // One-time route to create admin account (remove after use)
 Route::get('/create-admin-account', function () {
     $email = 'rich@rise-capital.uk';

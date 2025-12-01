@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ProjectUpdateMail;
+use App\Models\Account;
 use App\Models\Project;
 use App\Models\Update;
 use App\Models\UpdateImage;
@@ -280,21 +282,35 @@ class UpdateController extends Controller
             ->filter()
             ->unique('email');
 
-        $emails = $investorAccounts->pluck('email')->filter()->all();
+        $project = Project::find($update->project_id);
 
-        // Prepare email data
-        $mailData = [
-            'content' => $update->comment,
-            'url' => url('/investor/dashboard'),
-        ];
-        // Also need to send to Ben and Scott
-        $emails = array_merge($emails, ['ben@rise-capital.uk', 'scott@rise-capital.uk']);
+        // Send to investors
+        foreach ($investorAccounts as $investorAccount) {
+            try {
+                Mail::to($investorAccount->email)->send(
+                    new ProjectUpdateMail($investorAccount, $project, $update)
+                );
+            } catch (\Exception $e) {
+                \Log::error("Failed to send update email to {$investorAccount->email}: " . $e->getMessage());
+            }
+        }
 
-        foreach ($emails as $email) {
-            Mail::send('emails.project_update', $mailData, function ($message) use ($email) {
-                $message->to($email)
-                    ->subject('New Project Update');
-            });
+        // Also send to Ben and Scott (internal)
+        $internalEmails = ['ben@rise-capital.uk', 'scott@rise-capital.uk'];
+        foreach ($internalEmails as $email) {
+            try {
+                // Create a dummy account for internal emails
+                $dummyAccount = new Account();
+                $dummyAccount->email = $email;
+                $dummyAccount->person = null;
+                $dummyAccount->company = null;
+                
+                Mail::to($email)->send(
+                    new ProjectUpdateMail($dummyAccount, $project, $update)
+                );
+            } catch (\Exception $e) {
+                \Log::error("Failed to send update email to {$email}: " . $e->getMessage());
+            }
         }
 
         $notificationMessage = Str::limit(strip_tags($update->comment), 200);
@@ -330,6 +346,8 @@ class UpdateController extends Controller
             'url' => url('/investor/dashboard'),
         ];
 
+        $project = Project::find($update->project_id);
+        
         // Only send to Ben, Scott and Chris
         $emails = ['ben@rise-capital.uk', 'scott@rise-capital.uk', 'chris@jaevee.co.uk'];
 
@@ -339,10 +357,18 @@ class UpdateController extends Controller
         }
 
         foreach ($emails as $email) {
-            Mail::send('emails.project_update', $mailData, function ($message) use ($email) {
-                $message->to($email)
-                    ->subject('(Test) New Project Update');
-            });
+            try {
+                $dummyAccount = new Account();
+                $dummyAccount->email = $email;
+                $dummyAccount->person = null;
+                $dummyAccount->company = null;
+                
+                Mail::to($email)->send(
+                    new ProjectUpdateMail($dummyAccount, $project, $update)
+                );
+            } catch (\Exception $e) {
+                \Log::error("Failed to send test update email to {$email}: " . $e->getMessage());
+            }
         }
 
         return redirect()->route('admin.updates.index')
@@ -368,15 +394,22 @@ class UpdateController extends Controller
     // Function to send a test email
     public function sendTestEmail()
     {
-        $mailData = [
-            'content' => 'This is a test email.',
-            'url' => url('/investor/dashboard'),
-        ];
+        $dummyAccount = new Account();
+        $dummyAccount->email = 'chris@jaevee.co.uk';
+        $dummyAccount->person = null;
+        $dummyAccount->company = null;
+        
+        $dummyProject = new Project();
+        $dummyProject->name = 'Test Project';
+        
+        $dummyUpdate = new Update();
+        $dummyUpdate->comment = 'This is a test email.';
+        $dummyUpdate->sent_on = now();
 
-        Mail::send('emails.project_update', $mailData, function ($message) {
-            $message->to('chris@jaevee.co.uk')
-                ->subject('Test Project Update');
-        });
+        try {
+            Mail::to('chris@jaevee.co.uk')->send(
+                new ProjectUpdateMail($dummyAccount, $dummyProject, $dummyUpdate)
+            );
 
         return 'Test email sent.';
     }

@@ -15,7 +15,7 @@ return [
     */
 
     'postmark' => [
-        'token' => env('POSTMARK_TOKEN'),
+        'token' => env('POSTMARK_API_TOKEN', env('POSTMARK_TOKEN')),
     ],
 
     'ses' => [

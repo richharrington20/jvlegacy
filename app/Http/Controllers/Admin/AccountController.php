@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeInvestorMail;
 use App\Models\Account;
 use App\Models\AccountType;
 use App\Models\DocumentEmailLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class AccountController extends Controller
 {
@@ -273,6 +275,13 @@ class AccountController extends Controller
             ]);
 
             \DB::connection('legacy')->commit();
+
+            // Send welcome email
+            try {
+                Mail::to($account->email)->send(new WelcomeInvestorMail($account));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send welcome email: ' . $e->getMessage());
+            }
 
             return redirect()->route('admin.accounts.show', $account->id)
                 ->with('status', 'Account created successfully!');
