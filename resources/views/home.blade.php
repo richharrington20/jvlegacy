@@ -13,16 +13,13 @@
                 <div class="space-y-6">
                     <p class="text-sm uppercase tracking-[0.3em] text-blue-200 font-semibold">Institutional-grade co-investing</p>
                     <h1 class="text-5xl lg:text-6xl font-bold leading-tight">
-                        Build a diversified property portfolio without lifting a brick.
+                        Focused on fulfilling our existing commitments.
                     </h1>
                     <p class="text-xl text-blue-100 leading-relaxed">
-                        Back UK developments alongside JaeVee and our developer partners. Stay updated in real time,
-                        download agreements instantly, and know exactly when payouts land.
+                        As of now, JaeVee is no longer acquiring new development projects. We are concentrating entirely
+                        on completing current projects and delivering for our existing investors.
                     </p>
                     <div class="flex flex-wrap gap-4 pt-4">
-                        <a href="#opportunities" class="px-8 py-4 bg-white text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-all shadow-xl hover:shadow-2xl transform hover:scale-105">
-                            <i class="fas fa-chart-line mr-2"></i>View Current Opportunities
-                        </a>
                         <a href="{{ route('investor.login') }}" class="px-8 py-4 border-2 border-white/30 text-white font-bold rounded-xl hover:bg-white/10 backdrop-blur-sm transition-all">
                             <i class="fas fa-sign-in-alt mr-2"></i>Already Invested? Sign In
                         </a>
