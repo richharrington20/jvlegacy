@@ -34,7 +34,8 @@ class UpdateController extends Controller
 
         $updates = $query->orderByDesc('sent_on')->paginate(20);
 
-        $projects = Project::orderBy('name')->get();
+        // Order projects numerically by external project_id so the dropdown is in numeric order
+        $projects = Project::orderBy('project_id')->get();
 
         return view('admin.updates.index', [
             'updates' => $updates,
@@ -53,7 +54,8 @@ class UpdateController extends Controller
     public function edit($id)
     {
         $update = Update::with(['project', 'images'])->findOrFail($id);
-        $projects = Project::orderBy('name')->get();
+        // Use numeric order by project_id for consistency with the create form
+        $projects = Project::orderBy('project_id')->get();
         return view('admin.updates.edit', compact('update', 'projects'));
     }
 
