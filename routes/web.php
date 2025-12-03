@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\AccountDocumentController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ChangelogController;
 use App\Http\Controllers\Admin\InvestmentController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ProjectDocumentController;
@@ -62,6 +63,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
     Route::post('/system-status/{id}/toggle', [SystemStatusController::class, 'toggle'])->name('system-status.toggle');
     Route::post('/system-status/{id}/add-update', [SystemStatusController::class, 'addUpdate'])->name('system-status.add-update');
     Route::post('/system-status-updates/{updateId}/mark-fixed', [SystemStatusController::class, 'markFixed'])->name('system-status-updates.mark-fixed');
+
+    // Changelog
+    Route::get('/changelog', [ChangelogController::class, 'index'])->name('changelog.index');
+    Route::get('/changelog/create', [ChangelogController::class, 'create'])->name('changelog.create');
+    Route::post('/changelog', [ChangelogController::class, 'store'])->name('changelog.store');
     
     // Migration routes (accessible from admin)
     Route::get('/run-system-status-updates-migration', function () {
