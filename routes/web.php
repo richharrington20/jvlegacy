@@ -401,6 +401,73 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
         }
     })->name('admin.run-document-migrations');
 
+    // Direct route to create account_documents table
+    Route::get('/create-account-documents-table', function () {
+        try {
+            // Check if table already exists
+            if (\Illuminate\Support\Facades\Schema::connection('legacy')->hasTable('account_documents')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Table account_documents already exists!',
+                    'table_exists' => true,
+                ], 200, [], JSON_PRETTY_PRINT);
+            }
+
+            // Execute SQL directly
+            $sql = "CREATE TABLE IF NOT EXISTS `account_documents` (
+              `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+              `account_id` bigint(20) unsigned NOT NULL,
+              `name` varchar(255) NOT NULL,
+              `file_path` varchar(255) NOT NULL,
+              `file_type` varchar(255) DEFAULT NULL,
+              `file_size` int(11) DEFAULT NULL,
+              `category` varchar(255) DEFAULT NULL,
+              `description` text DEFAULT NULL,
+              `is_private` tinyint(1) DEFAULT 1,
+              `uploaded_by` bigint(20) unsigned DEFAULT NULL,
+              `created_on` datetime DEFAULT NULL,
+              `updated_on` datetime DEFAULT NULL,
+              `deleted` tinyint(1) DEFAULT 0,
+              PRIMARY KEY (`id`),
+              KEY `idx_account_id` (`account_id`),
+              KEY `idx_category` (`category`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+
+            \DB::connection('legacy')->unprepared($sql);
+
+            // Verify table was created
+            if (\Illuminate\Support\Facades\Schema::connection('legacy')->hasTable('account_documents')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Table account_documents created successfully!',
+                    'table_exists' => true,
+                ], 200, [], JSON_PRETTY_PRINT);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SQL executed but table was not created.',
+                    'table_exists' => false,
+                ], 500, [], JSON_PRETTY_PRINT);
+            }
+        } catch (\Exception $e) {
+            // Check if error is because table already exists
+            if (str_contains($e->getMessage(), 'already exists') || 
+                str_contains($e->getMessage(), 'Duplicate')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Table account_documents already exists!',
+                    'table_exists' => true,
+                ], 200, [], JSON_PRETTY_PRINT);
+            }
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    })->name('admin.create-account-documents-table');
+
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
     Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
