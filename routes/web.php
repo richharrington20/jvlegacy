@@ -271,6 +271,77 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
         }
     })->name('admin.run-account-shares-migration');
 
+    // Document migrations route
+    Route::get('/run-document-migrations', function () {
+        try {
+            $results = [];
+            
+            // Read and execute SQL files
+            $sqlFiles = [
+                '001_create_account_documents.sql',
+                '002_create_project_documents.sql',
+                '003_create_update_images.sql',
+                '004_add_rich_content_to_projects.sql',
+            ];
+            
+            foreach ($sqlFiles as $file) {
+                $filePath = database_path('migrations_sql/' . $file);
+                
+                if (!file_exists($filePath)) {
+                    $results[$file] = [
+                        'success' => false,
+                        'error' => 'File not found: ' . $filePath,
+                    ];
+                    continue;
+                }
+                
+                $sql = file_get_contents($filePath);
+                
+                // Split SQL into individual statements
+                $statements = array_filter(
+                    array_map('trim', explode(';', $sql)),
+                    function($stmt) {
+                        $stmt = trim($stmt);
+                        return !empty($stmt) && !preg_match('/^--/', $stmt);
+                    }
+                );
+                
+                $executed = 0;
+                $errors = [];
+                
+                foreach ($statements as $statement) {
+                    try {
+                        \DB::connection('legacy')->unprepared($statement);
+                        $executed++;
+                    } catch (\Exception $e) {
+                        // Ignore "table already exists" errors
+                        if (strpos($e->getMessage(), 'already exists') === false && 
+                            strpos($e->getMessage(), 'Duplicate') === false) {
+                            $errors[] = $e->getMessage();
+                        }
+                    }
+                }
+                
+                $results[$file] = [
+                    'success' => empty($errors),
+                    'statements_executed' => $executed,
+                    'errors' => $errors,
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Document migrations completed!',
+                'results' => $results,
+            ], 200, [], JSON_PRETTY_PRINT);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    })->name('admin.run-document-migrations');
+
     Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
     Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
