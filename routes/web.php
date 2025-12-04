@@ -276,21 +276,35 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
         try {
             $results = [];
             
-            // Read and execute SQL files
-            $sqlFiles = [
-                '001_create_account_documents.sql',
-                '002_create_project_documents.sql',
-                '003_create_update_images.sql',
-                '004_add_rich_content_to_projects.sql',
+            // Map of SQL files to table names they create
+            $migrations = [
+                '001_create_account_documents.sql' => 'account_documents',
+                '002_create_project_documents.sql' => 'project_documents',
+                '003_create_update_images.sql' => 'update_images',
             ];
             
-            foreach ($sqlFiles as $file) {
+            foreach ($migrations as $file => $tableName) {
                 $filePath = database_path('migrations_sql/' . $file);
                 
                 if (!file_exists($filePath)) {
                     $results[$file] = [
                         'success' => false,
                         'error' => 'File not found: ' . $filePath,
+                        'table_exists' => false,
+                    ];
+                    continue;
+                }
+                
+                // Check if table already exists
+                $tableExists = \Illuminate\Support\Facades\Schema::connection('legacy')->hasTable($tableName);
+                
+                if ($tableExists) {
+                    $results[$file] = [
+                        'success' => true,
+                        'message' => "Table '{$tableName}' already exists",
+                        'table_exists' => true,
+                        'statements_executed' => 0,
+                        'errors' => [],
                     ];
                     continue;
                 }
@@ -322,10 +336,54 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
                     }
                 }
                 
+                // Verify table was created
+                $tableExistsAfter = \Illuminate\Support\Facades\Schema::connection('legacy')->hasTable($tableName);
+                
+                $results[$file] = [
+                    'success' => $tableExistsAfter && empty($errors),
+                    'table_exists' => $tableExistsAfter,
+                    'statements_executed' => $executed,
+                    'errors' => $errors,
+                    'message' => $tableExistsAfter 
+                        ? "Table '{$tableName}' created successfully" 
+                        : "Table '{$tableName}' was not created",
+                ];
+            }
+            
+            // Handle 004_add_rich_content_to_projects.sql separately (it modifies existing table)
+            $file = '004_add_rich_content_to_projects.sql';
+            $filePath = database_path('migrations_sql/' . $file);
+            if (file_exists($filePath)) {
+                $sql = file_get_contents($filePath);
+                $statements = array_filter(
+                    array_map('trim', explode(';', $sql)),
+                    function($stmt) {
+                        $stmt = trim($stmt);
+                        return !empty($stmt) && !preg_match('/^--/', $stmt);
+                    }
+                );
+                
+                $executed = 0;
+                $errors = [];
+                
+                foreach ($statements as $statement) {
+                    try {
+                        \DB::connection('legacy')->unprepared($statement);
+                        $executed++;
+                    } catch (\Exception $e) {
+                        // Ignore "column already exists" errors
+                        if (strpos($e->getMessage(), 'already exists') === false && 
+                            strpos($e->getMessage(), 'Duplicate') === false) {
+                            $errors[] = $e->getMessage();
+                        }
+                    }
+                }
+                
                 $results[$file] = [
                     'success' => empty($errors),
                     'statements_executed' => $executed,
                     'errors' => $errors,
+                    'message' => 'Project rich content columns updated',
                 ];
             }
             
@@ -338,6 +396,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ], 500, [], JSON_PRETTY_PRINT);
         }
     })->name('admin.run-document-migrations');
