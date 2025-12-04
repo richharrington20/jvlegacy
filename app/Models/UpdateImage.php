@@ -35,12 +35,8 @@ class UpdateImage extends Model
 
     public function getUrlAttribute(): string
     {
-        // Use Storage::url() which handles the public disk correctly
-        if (Storage::disk('public')->exists($this->file_path)) {
-            return Storage::disk('public')->url($this->file_path);
-        }
-        
-        // Fallback to asset() if Storage::url() doesn't work
+        // Use asset() since storage symlink exists
+        // file_path format: updates/499/filename.jpg
         return asset('storage/' . $this->file_path);
     }
 
@@ -52,7 +48,7 @@ class UpdateImage extends Model
         
         // Check if thumbnail exists using Storage
         if (Storage::disk('public')->exists($thumbnailPath)) {
-            return Storage::disk('public')->url($thumbnailPath);
+            return asset('storage/' . $thumbnailPath);
         }
         
         // Fallback to original image
