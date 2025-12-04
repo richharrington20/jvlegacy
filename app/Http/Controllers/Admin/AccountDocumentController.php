@@ -49,11 +49,22 @@ class AccountDocumentController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'file' => 'required|file|max:10240', // 10MB max
+            'file' => 'nullable|file|max:10240', // 10MB max, now optional
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'is_private' => 'nullable|boolean',
         ]);
+
+        // Only process if a file was uploaded
+        if (!$request->hasFile('file')) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No file was uploaded. Please select a file to upload.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'No file was uploaded. Please select a file to upload.');
+        }
 
         $file = $request->file('file');
         $extension = $file->getClientOriginalExtension();

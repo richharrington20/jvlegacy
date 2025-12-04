@@ -113,9 +113,9 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">File <span class="text-red-500">*</span></label>
-                        <input type="file" name="file" id="doc-file" class="w-full px-3 py-2 border border-gray-300 rounded-md" required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                        <p class="text-xs text-gray-500 mt-1">Max file size: 10MB</p>
+                        <label class="block text-sm font-medium mb-1">File</label>
+                        <input type="file" name="file" id="doc-file" class="w-full px-3 py-2 border border-gray-300 rounded-md" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <p class="text-xs text-gray-500 mt-1">Max file size: 10MB (optional - only upload if needed)</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Description</label>
@@ -272,10 +272,17 @@ $(document).ready(function() {
             return;
         }
 
+        // Check if file is selected
+        const fileInput = $('#doc-file')[0];
+        if (!fileInput.files || !fileInput.files[0]) {
+            alert('Please select a file to upload, or leave the document section empty if you don\'t need to upload a document.');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('name', $('#doc-name').val());
         formData.append('category', $('#doc-category').val());
-        formData.append('file', $('#doc-file')[0].files[0]);
+        formData.append('file', fileInput.files[0]);
         formData.append('description', $('#doc-description').val());
         formData.append('is_private', $('#document-upload-form input[name="is_private"]').is(':checked') ? 1 : 0);
         formData.append('_token', '{{ csrf_token() }}');
