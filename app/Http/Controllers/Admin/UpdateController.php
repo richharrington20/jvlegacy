@@ -286,6 +286,12 @@ class UpdateController extends Controller
 
         $project = Project::find($update->project_id);
 
+        // If project doesn't exist, log error and skip sending emails
+        if (!$project) {
+            \Log::error("Project not found for update ID {$update->id} (project_id: {$update->project_id}). Cannot send update emails.");
+            return 0;
+        }
+
         // Send to investors
         foreach ($investorAccounts as $investorAccount) {
             try {

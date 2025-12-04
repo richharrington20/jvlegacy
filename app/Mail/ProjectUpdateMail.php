@@ -15,10 +15,10 @@ class ProjectUpdateMail extends Mailable
     use Queueable, SerializesModels;
 
     public Account $account;
-    public Project $project;
+    public ?Project $project;
     public Update $update;
 
-    public function __construct(Account $account, Project $project, Update $update)
+    public function __construct(Account $account, ?Project $project, Update $update)
     {
         $this->account = $account;
         $this->project = $project;
@@ -31,13 +31,18 @@ class ProjectUpdateMail extends Mailable
             ($this->account->person->first_name . ' ' . $this->account->person->last_name) : 
             ($this->account->company->name ?? 'Investor');
 
+        $projectName = $this->project?->name ?? 'Your Investment';
+        $projectUrl = $this->project 
+            ? route('investor.dashboard') . '#project-' . $this->project->id
+            : route('investor.dashboard');
+
         $variables = [
             'name' => $name,
-            'project_name' => $this->project->name ?? 'Your Investment',
+            'project_name' => $projectName,
             'update_content' => $this->update->comment ?? '',
             'update_date' => $this->update->sent_on ? $this->update->sent_on->format('d M Y') : date('d M Y'),
             'dashboard_url' => route('investor.dashboard'),
-            'project_url' => route('investor.dashboard') . '#project-' . $this->project->id,
+            'project_url' => $projectUrl,
         ];
 
         $template = EmailTemplateService::getTemplateWithFallback('project_update', $variables);
