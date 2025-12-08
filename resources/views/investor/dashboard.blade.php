@@ -271,14 +271,19 @@
                     @php 
                         $firstInv = $projectInvestments->first();
                         $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                        // If project is null but we have project_id, try to load it
+                        if (!$project && $firstInv && $firstInv->project_id) {
+                            $project = \App\Models\Project::where('id', $firstInv->project_id)->first();
+                        }
                     @endphp
                     @php $timeline = $projectTimelines[$projectId] ?? null; @endphp
                     
+                    @if($project)
                     <div class="mb-8 bg-white border border-gray-200 rounded-lg overflow-hidden">
                         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-2xl font-bold mb-2">{{ $project->name ?? 'Unknown Project' }}</h3>
+                                    <h3 class="text-2xl font-bold mb-2">{{ $project->name ?? 'Project #' . ($project->project_id ?? $project->id) }}</h3>
                                     <p class="text-blue-100">Project ID: {{ $project->project_id ?? 'N/A' }}</p>
                                 </div>
                                 <button
@@ -383,6 +388,46 @@
                             @endif
                         </div>
                     </div>
+                    @else
+                    <!-- Project not found - show investments anyway -->
+                    <div class="mb-8 bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-2xl font-bold mb-2">Project Not Found</h3>
+                                    <p class="text-gray-300">Project ID: {{ $projectId ?? 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-600 mb-4">The project associated with these investments could not be loaded. Please contact support if this issue persists.</p>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($projectInvestments as $investment)
+                                            <tr>
+                                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{!! money($investment->amount) !!}</td>
+                                                <td class="px-4 py-3 text-sm text-gray-500">{{ $investment->paid_on ? $investment->paid_on->format('d M Y') : '—' }}</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <span class="px-2 py-1 rounded text-xs font-medium {{ $investment->type == 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                                                        {{ $investment->type_label }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
                     @if($project)
                     <dialog id="support-modal-{{ $projectId }}" class="rounded-lg w-full max-w-2xl p-0">
@@ -419,13 +464,17 @@
                     @php 
                         $firstInv = $projectInvestments->first();
                         $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                        // If project is null but we have project_id, try to load it
+                        if (!$project && $firstInv && $firstInv->project_id) {
+                            $project = \App\Models\Project::where('id', $firstInv->project_id)->first();
+                        }
                     @endphp
                     @php $documents = $projectDocuments[$projectId] ?? collect(); @endphp
                     @php $documentLogs = $projectDocumentLogs[$projectId] ?? collect(); @endphp
                     
                     @if($documents->count())
                         <div class="mb-6 bg-white border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-xl font-semibold mb-4">{{ $project->name ?? 'Unknown Project' }}</h3>
+                            <h3 class="text-xl font-semibold mb-4">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4">
                                 @foreach($documents as $document)
                                     <a href="{{ $document->url }}" target="_blank" class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group">
@@ -460,6 +509,10 @@
                     @php 
                         $firstInv = $projectInvestments->first();
                         $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                        // If project is null but we have project_id, try to load it
+                        if (!$project && $firstInv && $firstInv->project_id) {
+                            $project = \App\Models\Project::where('id', $firstInv->project_id)->first();
+                        }
                     @endphp
                     @php $payouts = $projectPayouts[$projectId] ?? collect(); @endphp
                     @php $totalPaid = $payouts->where('paid', 1)->sum('amount'); @endphp
@@ -468,7 +521,7 @@
                         <div class="mb-6 bg-white border border-gray-200 rounded-lg overflow-hidden">
                             <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-4 text-white">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-xl font-bold">{{ $project->name ?? 'Unknown Project' }}</h3>
+                                    <h3 class="text-xl font-bold">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
                                     <div class="text-right">
                                         <p class="text-sm text-green-100">Total Paid</p>
                                         <p class="text-2xl font-bold">{!! money($totalPaid) !!}</p>

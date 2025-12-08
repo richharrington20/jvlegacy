@@ -78,6 +78,11 @@ class InvestorDashboardController extends Controller
         $perPage = 5;
         foreach ($investments as $projectId => $projectInvestments) {
             $project = $projectInvestments->first()->project;
+            // If project is null, try to load it directly using project_id from investment
+            if (!$project && $projectInvestments->first()->project_id) {
+                $project = Project::where('id', $projectInvestments->first()->project_id)->first();
+            }
+            
             if ($project) {
                 $project->loadMissing('investorDocuments', 'property');
 
