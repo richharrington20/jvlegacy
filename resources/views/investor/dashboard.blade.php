@@ -257,11 +257,21 @@
                                                 @if($update->sent_on)
                                                     @php
                                                         $sentOn = $update->sent_on;
-                                                        if (is_string($sentOn)) {
-                                                            $sentOn = \Carbon\Carbon::parse($sentOn);
+                                                        if ($sentOn) {
+                                                            if (is_string($sentOn)) {
+                                                                try {
+                                                                    $sentOn = \Carbon\Carbon::parse($sentOn);
+                                                                } catch (\Exception $e) {
+                                                                    $sentOn = null;
+                                                                }
+                                                            }
+                                                            if ($sentOn && ($sentOn instanceof \Carbon\Carbon || $sentOn instanceof \DateTime)) {
+                                                                echo $sentOn->format('d M Y');
+                                                            } else {
+                                                                echo 'Invalid date';
+                                                            }
                                                         }
                                                     @endphp
-                                                    {{ $sentOn->format('d M Y') }}
                                                 @endif
                                             </p>
                                         </div>
@@ -348,11 +358,21 @@
                                                             @if($update->sent_on)
                                                                 @php
                                                                     $sentOn = $update->sent_on;
-                                                                    if (is_string($sentOn)) {
-                                                                        $sentOn = \Carbon\Carbon::parse($sentOn);
+                                                                    if ($sentOn) {
+                                                                        if (is_string($sentOn)) {
+                                                                            try {
+                                                                                $sentOn = \Carbon\Carbon::parse($sentOn);
+                                                                            } catch (\Exception $e) {
+                                                                                $sentOn = null;
+                                                                            }
+                                                                        }
+                                                                        if ($sentOn && ($sentOn instanceof \Carbon\Carbon || $sentOn instanceof \DateTime)) {
+                                                                            echo $sentOn->format('d M Y');
+                                                                        } else {
+                                                                            echo 'Invalid date';
+                                                                        }
                                                                     }
                                                                 @endphp
-                                                                {{ $sentOn->format('d M Y') }}
                                                             @endif
                                                         </p>
                                                         <p class="text-sm text-gray-900">{!! nl2br(e(Str::limit($update->comment_preview ?? '', 150))) !!}</p>
@@ -383,12 +403,16 @@
                                             <p class="text-lg font-bold text-gray-900">
                                                 @if($timeline['expected_payout'])
                                                     @php
-                                                        $payoutDate = $timeline['expected_payout'];
-                                                        if (is_string($payoutDate)) {
-                                                            $payoutDate = \Carbon\Carbon::parse($payoutDate);
+                                                        $payoutDate = $timeline['expected_payout'] ?? null;
+                                                        if ($payoutDate) {
+                                                            if (is_string($payoutDate)) {
+                                                                $payoutDate = \Carbon\Carbon::parse($payoutDate);
+                                                            }
+                                                            echo $payoutDate->format('d M Y');
+                                                        } else {
+                                                            echo 'TBC';
                                                         }
                                                     @endphp
-                                                    {{ $payoutDate->format('d M Y') }}
                                                 @else
                                                     TBC
                                                 @endif
@@ -404,11 +428,19 @@
                                                         @if($stage['date'])
                                                             @php
                                                                 $stageDate = $stage['date'];
-                                                                if (is_string($stageDate)) {
-                                                                    $stageDate = \Carbon\Carbon::parse($stageDate);
+                                                                if ($stageDate) {
+                                                                    if (is_string($stageDate)) {
+                                                                        $stageDate = \Carbon\Carbon::parse($stageDate);
+                                                                    }
+                                                                    if ($stageDate instanceof \Carbon\Carbon || $stageDate instanceof \DateTime) {
+                                                                        echo $stageDate->format('d M Y');
+                                                                    } else {
+                                                                        echo 'Invalid date';
+                                                                    }
+                                                                } else {
+                                                                    echo 'Pending';
                                                                 }
                                                             @endphp
-                                                            {{ $stageDate->format('d M Y') }}
                                                         @else
                                                             Pending
                                                         @endif
@@ -456,11 +488,21 @@
                                                     @if($investment->paid_on)
                                                         @php
                                                             $paidOn = $investment->paid_on;
-                                                            if (is_string($paidOn)) {
-                                                                $paidOn = \Carbon\Carbon::parse($paidOn);
+                                                            if ($paidOn) {
+                                                                if (is_string($paidOn)) {
+                                                                    try {
+                                                                        $paidOn = \Carbon\Carbon::parse($paidOn);
+                                                                    } catch (\Exception $e) {
+                                                                        $paidOn = null;
+                                                                    }
+                                                                }
+                                                                if ($paidOn && ($paidOn instanceof \Carbon\Carbon || $paidOn instanceof \DateTime)) {
+                                                                    echo $paidOn->format('d M Y');
+                                                                } else {
+                                                                    echo 'Invalid date';
+                                                                }
                                                             }
                                                         @endphp
-                                                        {{ $paidOn->format('d M Y') }}
                                                     @else
                                                         —
                                                     @endif
@@ -549,9 +591,17 @@
                                             $sentAt = $documentLogs->first()->sent_at ?? null;
                                             if ($sentAt) {
                                                 if (is_string($sentAt)) {
-                                                    $sentAt = \Carbon\Carbon::parse($sentAt);
+                                                    try {
+                                                        $sentAt = \Carbon\Carbon::parse($sentAt);
+                                                    } catch (\Exception $e) {
+                                                        $sentAt = null;
+                                                    }
                                                 }
-                                                echo $sentAt->format('d M Y H:i');
+                                                if ($sentAt && ($sentAt instanceof \Carbon\Carbon || $sentAt instanceof \DateTime)) {
+                                                    echo $sentAt->format('d M Y H:i');
+                                                } else {
+                                                    echo 'Invalid date';
+                                                }
                                             } else {
                                                 echo 'Never';
                                             }
@@ -607,9 +657,17 @@
                                                             $dueOn = optional($payout->quarterlyUpdate)->due_on;
                                                             if ($dueOn) {
                                                                 if (is_string($dueOn)) {
-                                                                    $dueOn = \Carbon\Carbon::parse($dueOn);
+                                                                    try {
+                                                                        $dueOn = \Carbon\Carbon::parse($dueOn);
+                                                                    } catch (\Exception $e) {
+                                                                        $dueOn = null;
+                                                                    }
                                                                 }
-                                                                echo $dueOn->format('d M Y');
+                                                                if ($dueOn && ($dueOn instanceof \Carbon\Carbon || $dueOn instanceof \DateTime)) {
+                                                                    echo $dueOn->format('d M Y');
+                                                                } else {
+                                                                    echo '—';
+                                                                }
                                                             } else {
                                                                 echo '—';
                                                             }
@@ -624,11 +682,21 @@
                                                                 @if($payout->paid_on)
                                                                     @php
                                                                         $paidOn = $payout->paid_on;
-                                                                        if (is_string($paidOn)) {
-                                                                            $paidOn = \Carbon\Carbon::parse($paidOn);
+                                                                        if ($paidOn) {
+                                                                            if (is_string($paidOn)) {
+                                                                                try {
+                                                                                    $paidOn = \Carbon\Carbon::parse($paidOn);
+                                                                                } catch (\Exception $e) {
+                                                                                    $paidOn = null;
+                                                                                }
+                                                                            }
+                                                                            if ($paidOn && ($paidOn instanceof \Carbon\Carbon || $paidOn instanceof \DateTime)) {
+                                                                                echo 'Paid ' . $paidOn->format('d M Y');
+                                                                            } else {
+                                                                                echo 'Paid (Invalid date)';
+                                                                            }
                                                                         }
                                                                     @endphp
-                                                                    Paid {{ $paidOn->format('d M Y') }}
                                                                 @endif
                                                             </span>
                                                         @else
@@ -693,9 +761,17 @@
                                                             $sentAt = $email->sent_at ?? null;
                                                             if ($sentAt) {
                                                                 if (is_string($sentAt)) {
-                                                                    $sentAt = \Carbon\Carbon::parse($sentAt);
+                                                                    try {
+                                                                        $sentAt = \Carbon\Carbon::parse($sentAt);
+                                                                    } catch (\Exception $e) {
+                                                                        $sentAt = null;
+                                                                    }
                                                                 }
-                                                                echo $sentAt->format('d M Y, H:i');
+                                                                if ($sentAt && ($sentAt instanceof \Carbon\Carbon || $sentAt instanceof \DateTime)) {
+                                                                    echo $sentAt->format('d M Y, H:i');
+                                                                } else {
+                                                                    echo 'Unknown date';
+                                                                }
                                                             } else {
                                                                 echo 'Unknown date';
                                                             }
@@ -1067,9 +1143,15 @@
                                                             $createdOn = $update->created_on ?? null;
                                                             if ($createdOn) {
                                                                 if (is_string($createdOn)) {
-                                                                    $createdOn = \Carbon\Carbon::parse($createdOn);
+                                                                    try {
+                                                                        $createdOn = \Carbon\Carbon::parse($createdOn);
+                                                                    } catch (\Exception $e) {
+                                                                        $createdOn = null;
+                                                                    }
                                                                 }
-                                                                echo $createdOn->format('d M Y, H:i');
+                                                                if ($createdOn && ($createdOn instanceof \Carbon\Carbon || $createdOn instanceof \DateTime)) {
+                                                                    echo $createdOn->format('d M Y, H:i');
+                                                                }
                                                             }
                                                         @endphp
                                                     </span>

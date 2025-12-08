@@ -120,7 +120,7 @@ class InvestorDashboardController extends Controller
                                 [
                                     'project_id' => $project->project_id,
                                     'type' => 'payout',
-                                    'message' => 'Payment of ' . strip_tags(money($payout->amount ?? 0)) . ' recorded on ' . ($payout->paid_on ? $payout->paid_on->format('d M Y') : ''),
+                                    'message' => 'Payment of ' . strip_tags(money($payout->amount ?? 0)) . ' recorded on ' . ($payout->paid_on ? (is_string($payout->paid_on) ? \Carbon\Carbon::parse($payout->paid_on)->format('d M Y') : $payout->paid_on->format('d M Y')) : ''),
                                     'link' => url('/investor/dashboard') . '#project-' . $project->project_id,
                                 ]
                             );
