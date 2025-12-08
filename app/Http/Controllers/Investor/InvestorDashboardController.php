@@ -219,64 +219,92 @@ class InvestorDashboardController extends Controller
         $emailHistory = collect();
         try {
             // Get document emails
-            $documentEmails = DocumentEmailLog::where('account_id', $account->id)
-                ->with('project')
-                ->get()
-                ->map(function($log) {
-                    return (object)[
-                        'id' => 'doc_' . $log->id,
-                        'email_type' => EmailHistory::TYPE_DOCUMENT,
-                        'type_label' => 'Document Email',
-                        'icon' => 'fas fa-file-alt text-blue-500',
-                        'subject' => 'Your documents for ' . ($log->project->name ?? 'your investment'),
-                        'recipient' => $log->recipient,
-                        'project' => $log->project,
-                        'sent_at' => $log->sent_at,
-                    ];
-                });
+            $documentEmails = collect();
+            try {
+                $documentEmails = DocumentEmailLog::where('account_id', $account->id)
+                    ->with('project')
+                    ->get()
+                    ->map(function($log) {
+                        return (object)[
+                            'id' => 'doc_' . $log->id,
+                            'email_type' => EmailHistory::TYPE_DOCUMENT,
+                            'type_label' => 'Document Email',
+                            'icon' => 'fas fa-file-alt text-blue-500',
+                            'subject' => 'Your documents for ' . ($log->project->name ?? 'your investment'),
+                            'recipient' => $log->recipient ?? $account->email,
+                            'project' => $log->project,
+                            'sent_at' => $log->sent_at,
+                        ];
+                    });
+            } catch (\Exception $e) {
+                // Table might not exist or query failed
+                \Log::warning('Failed to load document emails: ' . $e->getMessage());
+            }
 
             // Get project update emails (from updates sent)
-            $updateEmails = \App\Models\Update::whereHas('project.investments', function($query) use ($account) {
-                    $query->where('account_id', $account->id)->where('paid', 1);
-                })
-                ->where('category', 3)
-                ->where('sent', 1)
-                ->with('project')
-                ->get()
-                ->map(function($update) use ($account) {
-                    return (object)[
-                        'id' => 'update_' . $update->id,
-                        'email_type' => EmailHistory::TYPE_PROJECT_UPDATE,
-                        'type_label' => 'Project Update',
-                        'icon' => 'fas fa-bullhorn text-green-500',
-                        'subject' => 'Project Update: ' . ($update->project->name ?? 'Your Investment'),
-                        'recipient' => $account->email,
-                        'project' => $update->project,
-                        'sent_at' => $update->sent_on,
-                    ];
-                });
+            $updateEmails = collect();
+            try {
+                $updateEmails = \App\Models\Update::whereHas('project.investments', function($query) use ($account) {
+                        $query->where('account_id', $account->id)->where('paid', 1);
+                    })
+                    ->where('category', 3)
+                    ->where('sent', 1)
+                    ->with('project')
+                    ->get()
+                    ->map(function($update) use ($account) {
+                        return (object)[
+                            'id' => 'update_' . $update->id,
+                            'email_type' => EmailHistory::TYPE_PROJECT_UPDATE,
+                            'type_label' => 'Project Update',
+                            'icon' => 'fas fa-bullhorn text-green-500',
+                            'subject' => 'Project Update: ' . ($update->project->name ?? 'Your Investment'),
+                            'recipient' => $account->email,
+                            'project' => $update->project,
+                            'sent_at' => $update->sent_on,
+                        ];
+                    });
+            } catch (\Exception $e) {
+                // Query might fail
+                \Log::warning('Failed to load update emails: ' . $e->getMessage());
+            }
 
             // Get support ticket emails
-            $ticketEmails = SupportTicket::where('account_id', $account->id)
-                ->with('project')
-                ->get()
-                ->map(function($ticket) {
-                    return (object)[
-                        'id' => 'ticket_' . $ticket->id,
-                        'email_type' => EmailHistory::TYPE_SUPPORT_TICKET,
-                        'type_label' => 'Support Ticket',
-                        'icon' => 'fas fa-headset text-purple-500',
-                        'subject' => 'Support Ticket Created - ' . $ticket->ticket_id,
-                        'recipient' => $ticket->account->email ?? '',
-                        'project' => $ticket->project,
-                        'sent_at' => $ticket->created_on,
-                    ];
-                });
+            $ticketEmails = collect();
+            try {
+                $ticketEmails = SupportTicket::where('account_id', $account->id)
+                    ->with('project')
+                    ->get()
+                    ->map(function($ticket) use ($account) {
+                        return (object)[
+                            'id' => 'ticket_' . $ticket->id,
+                            'email_type' => EmailHistory::TYPE_SUPPORT_TICKET,
+                            'type_label' => 'Support Ticket',
+                            'icon' => 'fas fa-headset text-purple-500',
+                            'subject' => 'Support Ticket Created - ' . ($ticket->ticket_id ?? 'N/A'),
+                            'recipient' => $ticket->account->email ?? $account->email,
+                            'project' => $ticket->project,
+                            'sent_at' => $ticket->created_on,
+                        ];
+                    });
+            } catch (\Exception $e) {
+                // Table might not exist or query failed
+                \Log::warning('Failed to load ticket emails: ' . $e->getMessage());
+            }
 
             // Combine and sort by date
             $emailHistory = $documentEmails->merge($updateEmails)->merge($ticketEmails)
                 ->sortByDesc(function($email) {
-                    return $email->sent_at ? $email->sent_at->timestamp : 0;
+                    if (!$email->sent_at) {
+                        return 0;
+                    }
+                    if (is_string($email->sent_at)) {
+                        try {
+                            return \Carbon\Carbon::parse($email->sent_at)->timestamp;
+                        } catch (\Exception $e) {
+                            return 0;
+                        }
+                    }
+                    return $email->sent_at->timestamp ?? 0;
                 })
                 ->values();
 
@@ -292,8 +320,9 @@ class InvestorDashboardController extends Controller
                 ['path' => request()->url(), 'pageName' => 'email_page']
             );
         } catch (\Exception $e) {
-            // Tables might not exist yet
-            $emailHistory = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+            // Fallback: create empty paginator
+            \Log::error('Failed to load email history: ' . $e->getMessage());
+            $emailHistory = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20, 1, ['path' => request()->url(), 'pageName' => 'email_page']);
         }
 
         // Get account documents (personal documents like share certificates)

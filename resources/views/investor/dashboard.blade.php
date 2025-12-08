@@ -884,36 +884,40 @@
                         <h3 class="text-lg font-semibold">Email History</h3>
                         <p class="text-sm text-gray-600 mt-1">All emails sent to you from the system</p>
                     </div>
-                    @if(isset($emailHistory) && $emailHistory->count() > 0)
+                    @php
+                        $hasEmailHistory = isset($emailHistory) && 
+                                          ($emailHistory instanceof \Illuminate\Pagination\LengthAwarePaginator ? $emailHistory->total() > 0 : $emailHistory->count() > 0);
+                    @endphp
+                    @if($hasEmailHistory)
                         <div class="divide-y divide-gray-200">
                             @foreach($emailHistory as $email)
                                 <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
                                     <div class="flex items-start gap-4">
                                         <div class="flex-shrink-0 mt-1">
-                                            <i class="{{ $email->icon }} text-xl"></i>
+                                            <i class="{{ $email->icon ?? 'fas fa-envelope' }} text-xl"></i>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-start justify-between gap-4">
                                                 <div class="flex-1">
                                                     <div class="flex items-center gap-2 mb-1">
                                                         <span class="px-2 py-0.5 text-xs font-medium rounded-full {{ 
-                                                            $email->email_type === 'document' ? 'bg-blue-100 text-blue-800' : 
-                                                            ($email->email_type === 'project_update' ? 'bg-green-100 text-green-800' : 
-                                                            ($email->email_type === 'support_ticket' ? 'bg-purple-100 text-purple-800' : 
-                                                            ($email->email_type === 'payout' ? 'bg-emerald-100 text-emerald-800' : 
+                                                            ($email->email_type ?? '') === 'document' ? 'bg-blue-100 text-blue-800' : 
+                                                            (($email->email_type ?? '') === 'project_update' ? 'bg-green-100 text-green-800' : 
+                                                            (($email->email_type ?? '') === 'support_ticket' ? 'bg-purple-100 text-purple-800' : 
+                                                            (($email->email_type ?? '') === 'payout' ? 'bg-emerald-100 text-emerald-800' : 
                                                             'bg-gray-100 text-gray-800'))) 
                                                         }}">
-                                                            {{ $email->type_label }}
+                                                            {{ $email->type_label ?? 'Email' }}
                                                         </span>
-                                                        @if($email->project)
-                                                            <span class="text-xs text-gray-500">• {{ $email->project->name }}</span>
+                                                        @if(isset($email->project) && $email->project)
+                                                            <span class="text-xs text-gray-500">• {{ $email->project->name ?? 'Unknown Project' }}</span>
                                                         @endif
                                                     </div>
                                                     <h4 class="text-sm font-semibold text-gray-900 mb-1">
                                                         {{ $email->subject ?? 'No subject' }}
                                                     </h4>
                                                     <p class="text-xs text-gray-500">
-                                                        To: {{ $email->recipient }}
+                                                        To: {{ $email->recipient ?? 'N/A' }}
                                                     </p>
                                                 </div>
                                                 <div class="flex-shrink-0 text-right">
@@ -938,9 +942,16 @@
                                                             }
                                                         @endphp
                                                     </p>
-                                                    <p class="text-xs text-gray-400 mt-1">
-                                                        {{ $email->sent_at?->diffForHumans() ?? '' }}
-                                                    </p>
+                                                    @if(isset($email->sent_at) && $email->sent_at)
+                                                        @php
+                                                            try {
+                                                                $diffForHumans = is_string($email->sent_at) ? \Carbon\Carbon::parse($email->sent_at)->diffForHumans() : $email->sent_at->diffForHumans();
+                                                                echo '<p class="text-xs text-gray-400 mt-1">' . $diffForHumans . '</p>';
+                                                            } catch (\Exception $e) {
+                                                                // Silently fail
+                                                            }
+                                                        @endphp
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
@@ -948,7 +959,7 @@
                                 </div>
                             @endforeach
                         </div>
-                        @if($emailHistory->hasPages())
+                        @if(isset($emailHistory) && $emailHistory instanceof \Illuminate\Pagination\LengthAwarePaginator && $emailHistory->hasPages())
                             <div class="px-6 py-4 border-t border-gray-200">
                                 {{ $emailHistory->links() }}
                             </div>
@@ -956,8 +967,14 @@
                     @else
                         <div class="p-12 text-center">
                             <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
-                            <p class="text-gray-500">No email history yet.</p>
-                            <p class="text-sm text-gray-400 mt-2">Emails sent to you will appear here</p>
+                            <p class="text-gray-600 font-medium mb-2">No email history yet</p>
+                            <p class="text-sm text-gray-500">Emails sent to you from the system will appear here, including:</p>
+                            <ul class="text-sm text-gray-500 mt-3 space-y-1">
+                                <li>• Project update notifications</li>
+                                <li>• Document delivery emails</li>
+                                <li>• Support ticket confirmations</li>
+                                <li>• Payout notifications</li>
+                            </ul>
                         </div>
                     @endif
                 </div>
