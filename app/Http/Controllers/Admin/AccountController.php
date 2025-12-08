@@ -85,10 +85,15 @@ class AccountController extends Controller
                 }
                 
                 $project = $investments->first()->project;
+                // If project is null, try to load it directly using project_id from investment
+                if (!$project && $investments->first()->project_id) {
+                    $project = \App\Models\Project::where('id', $investments->first()->project_id)->first();
+                }
+                
                 return [
                     'project' => $project,
-                    'project_id' => $project->project_id ?? null,
-                    'project_name' => $project->name ?? 'Unknown Project',
+                    'project_id' => $project ? ($project->project_id ?? null) : null,
+                    'project_name' => $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project',
                     'total_invested' => $investments->sum('amount'),
                     'total_paid' => $investments->where('paid', 1)->sum('amount'),
                     'total_unpaid' => $investments->where('paid', 0)->sum('amount'),

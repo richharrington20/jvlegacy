@@ -215,6 +215,90 @@
                     </div>
                 @endif
             </div>
+
+            <!-- Personal Documents Section -->
+            <div id="personal-documents-section" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Personal Documents</h2>
+                    <button type="button" onclick="document.getElementById('personal-documents-section').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">Upload and manage personal documents like share certificates, loan agreements, and statements.</p>
+                
+                <!-- Document Upload Form -->
+                <form id="personal-document-form" class="space-y-4 mb-6 pb-6 border-b border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Document Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" id="personal-doc-name" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Category</label>
+                            <select name="category" id="personal-doc-category" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                <option value="share_certificate">Share Certificate</option>
+                                <option value="loan_agreement">Loan Agreement</option>
+                                <option value="statement">Statement</option>
+                                <option value="kyc">KYC</option>
+                                <option value="contract">Contract</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">File</label>
+                        <input type="file" name="file" id="personal-doc-file" class="w-full px-3 py-2 border border-gray-300 rounded-md" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <p class="text-xs text-gray-500 mt-1">Max file size: 10MB (optional - only upload if needed)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Description</label>
+                        <textarea name="description" id="personal-doc-description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                    </div>
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_private" value="1" checked class="mr-2">
+                            <span class="text-sm font-medium">Private (only visible to this account)</span>
+                        </label>
+                    </div>
+                    <button type="button" id="upload-personal-document-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        <i class="fas fa-upload mr-2"></i>Upload Document
+                    </button>
+                </form>
+                
+                <!-- Documents List -->
+                <div id="personal-documents-list" class="space-y-2">
+                    @if($accountDocuments && $accountDocuments->count() > 0)
+                        @foreach($accountDocuments as $doc)
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-file-{{ $doc->file_type === 'pdf' ? 'pdf' : ($doc->file_type === 'doc' || $doc->file_type === 'docx' ? 'word' : 'alt') }} text-gray-400"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ $doc->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ ucfirst($doc->category ?? 'general') }} • {{ $doc->file_type ?? 'Unknown' }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <a href="{{ $doc->url ?? '#' }}" target="_blank" class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                        <i class="fas fa-download mr-1"></i>Download
+                                    </a>
+                                    <form action="{{ route('admin.account-documents.destroy', [$account->id, $doc->id]) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this document?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
+                                            <i class="fas fa-trash mr-1"></i>Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-file-alt text-4xl mb-3"></i>
+                            <p>No personal documents uploaded yet.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
 
         <!-- Sidebar -->
@@ -232,6 +316,9 @@
                     <a href="{{ route('admin.investments.create') }}?account_id={{ $account->id }}" class="block w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm text-center">
                         <i class="fas fa-plus mr-2"></i>Create Investment
                     </a>
+                    <button type="button" onclick="document.getElementById('personal-documents-section').classList.toggle('hidden')" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm">
+                        <i class="fas fa-file-alt mr-2"></i>Personal Documents
+                    </button>
                 </div>
             </div>
 
@@ -336,4 +423,73 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle personal document upload
+    const uploadPersonalDocBtn = document.getElementById('upload-personal-document-btn');
+    if (uploadPersonalDocBtn) {
+        uploadPersonalDocBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const accountId = {{ $account->id }};
+            const fileInput = document.getElementById('personal-doc-file');
+            
+            // Check if file is selected
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', document.getElementById('personal-doc-name').value);
+            formData.append('category', document.getElementById('personal-doc-category').value);
+            formData.append('file', fileInput.files[0]);
+            formData.append('description', document.getElementById('personal-doc-description').value);
+            formData.append('is_private', document.querySelector('#personal-document-form input[name="is_private"]').checked ? 1 : 0);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            // Disable button during upload
+            uploadPersonalDocBtn.disabled = true;
+            uploadPersonalDocBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+
+            fetch(`/admin/accounts/${accountId}/documents`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Document uploaded successfully!');
+                    // Reset form
+                    document.getElementById('personal-doc-name').value = '';
+                    document.getElementById('personal-doc-category').value = 'share_certificate';
+                    fileInput.value = '';
+                    document.getElementById('personal-doc-description').value = '';
+                    document.querySelector('#personal-document-form input[name="is_private"]').checked = true;
+                    
+                    // Reload page to show new document
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error uploading document. Please try again.');
+            })
+            .finally(() => {
+                uploadPersonalDocBtn.disabled = false;
+                uploadPersonalDocBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Upload Document';
+            });
+        });
+    }
+});
+</script>
+@endpush
 @endsection
