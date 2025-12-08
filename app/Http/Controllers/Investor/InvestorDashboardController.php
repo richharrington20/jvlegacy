@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
+use App\Models\AccountDocument;
 use App\Models\AccountShare;
 use App\Models\DocumentEmailLog;
 use App\Models\EmailHistory;
@@ -117,7 +118,7 @@ class InvestorDashboardController extends Controller
                 // Use a unique page parameter for each project
                 $pageParam = 'updates_page_' . $projectId;
                 $page = request()->input($pageParam, 1);
-                $updatesQuery = $project->updates()->where('category', 3)->orderByDesc('sent_on');
+                $updatesQuery = $project->updates()->with('project', 'images')->where('category', 3)->orderByDesc('sent_on');
                 $projectUpdates[$projectId] = $updatesQuery->paginate($perPage, ['*'], $pageParam, $page);
 
                 $projectDocuments[$projectId] = $project->investorDocuments;
@@ -295,6 +296,20 @@ class InvestorDashboardController extends Controller
             $emailHistory = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         }
 
+        // Get account documents (personal documents like share certificates)
+        $accountDocuments = collect();
+        try {
+            $accountDocuments = AccountDocument::where('account_id', $account->id)
+                ->where('deleted', false)
+                ->orderBy('created_on', 'desc')
+                ->get();
+        } catch (\Exception $e) {
+            // Table might not exist yet
+            if (!str_contains($e->getMessage(), "Table 'jvsys.account_documents' doesn't exist")) {
+                throw $e;
+            }
+        }
+
         return view('investor.dashboard', compact(
             'account',
             'investments',
@@ -307,7 +322,8 @@ class InvestorDashboardController extends Controller
             'unreadNotifications',
             'supportTickets',
             'systemStatus',
-            'emailHistory'
+            'emailHistory',
+            'accountDocuments'
         ));
     }
 

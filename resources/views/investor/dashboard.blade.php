@@ -239,41 +239,82 @@
                 @if(count($investments) > 0)
                     <div class="bg-white rounded-lg border border-gray-200 p-6">
                         <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
-                        <div class="space-y-3">
+                        <div class="space-y-3" x-data="{ expandedUpdates: {} }">
                             @php
                                 $recentUpdates = collect();
                                 foreach ($projectUpdates as $updates) {
                                     $recentUpdates = $recentUpdates->merge($updates->items());
                                 }
                                 $recentUpdates = $recentUpdates->sortByDesc('sent_on')->take(3);
+                                // Load project relationships for all updates
+                                foreach ($recentUpdates as $update) {
+                                    if (!$update->relationLoaded('project') && $update->project_id) {
+                                        $update->load('project');
+                                    }
+                                }
                             @endphp
                             @if($recentUpdates->count() > 0)
                                 @foreach($recentUpdates as $update)
-                                    <div class="flex items-start p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                        <i class="fas fa-bullhorn text-blue-500 mt-1 mr-3"></i>
-                                        <div class="flex-1">
-                                            <p class="text-sm font-medium text-gray-900">Project Update</p>
-                                            <p class="text-xs text-gray-500 mt-1">
-                                                @if($update->sent_on)
-                                                    @php
-                                                        $sentOn = $update->sent_on;
-                                                        if ($sentOn) {
-                                                            if (is_string($sentOn)) {
-                                                                try {
-                                                                    $sentOn = \Carbon\Carbon::parse($sentOn);
-                                                                } catch (\Exception $e) {
-                                                                    $sentOn = null;
+                                    @php
+                                        $project = $update->project;
+                                        $projectName = 'Unknown Project';
+                                        if ($project) {
+                                            $projectName = $project->name ?? ('Project #' . ($project->project_id ?? $project->id));
+                                        } elseif ($update->project_id) {
+                                            $projectName = 'Project #' . $update->project_id;
+                                        }
+                                    @endphp
+                                    <div class="bg-gray-50 rounded-lg border border-gray-200" x-data="{ expanded: false }">
+                                        <button 
+                                            @click="expanded = !expanded"
+                                            class="w-full flex items-start p-3 hover:bg-gray-100 transition-colors text-left"
+                                            type="button"
+                                        >
+                                            <i class="fas fa-bullhorn text-blue-500 mt-1 mr-3 flex-shrink-0"></i>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900">{{ $projectName }}</p>
+                                                <p class="text-xs text-gray-500 mt-1">
+                                                    @if($update->sent_on)
+                                                        @php
+                                                            $sentOn = $update->sent_on;
+                                                            if ($sentOn) {
+                                                                if (is_string($sentOn)) {
+                                                                    try {
+                                                                        $sentOn = \Carbon\Carbon::parse($sentOn);
+                                                                    } catch (\Exception $e) {
+                                                                        $sentOn = null;
+                                                                    }
+                                                                }
+                                                                if ($sentOn && ($sentOn instanceof \Carbon\Carbon || $sentOn instanceof \DateTime)) {
+                                                                    echo $sentOn->format('d M Y');
+                                                                } else {
+                                                                    echo 'Invalid date';
                                                                 }
                                                             }
-                                                            if ($sentOn && ($sentOn instanceof \Carbon\Carbon || $sentOn instanceof \DateTime)) {
-                                                                echo $sentOn->format('d M Y');
-                                                            } else {
-                                                                echo 'Invalid date';
-                                                            }
-                                                        }
-                                                    @endphp
+                                                        @endphp
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            <i class="fas fa-chevron-down text-gray-400 ml-2 mt-1 transition-transform" :class="{ 'rotate-180': expanded }"></i>
+                                        </button>
+                                        <div x-show="expanded" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="px-3 pb-3">
+                                            <div class="ml-8 pt-2 border-t border-gray-200">
+                                                <div class="text-sm text-gray-700 prose prose-sm max-w-none">
+                                                    {!! nl2br(e($update->comment ?? $update->comment_preview ?? '')) !!}
+                                                </div>
+                                                @if($update->images && $update->images->count() > 0)
+                                                    <div class="mt-4 grid grid-cols-2 gap-3">
+                                                        @foreach($update->images as $image)
+                                                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                                                <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
+                                                                @if($image->description)
+                                                                    <div class="px-2 py-1 text-xs text-gray-600">{{ $image->description }}</div>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 @endif
-                                            </p>
+                                            </div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -359,9 +400,9 @@
                             @if($updates && $updates->count())
                                 <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                                     <h4 class="font-semibold mb-3 text-blue-900">Project Updates</h4>
-                                    <div class="space-y-3">
+                                    <div class="space-y-3" x-data="{ expandedUpdates: {} }">
                                         @foreach($updates->take(3) as $update)
-                                            <div class="bg-white p-3 rounded border border-blue-100">
+                                            <div class="bg-white p-3 rounded border border-blue-100" x-data="{ expanded: false }">
                                                 <div class="flex items-start justify-between">
                                                     <div class="flex-1">
                                                         <p class="text-xs text-gray-500 mb-1">
@@ -385,13 +426,33 @@
                                                                 @endphp
                                                             @endif
                                                         </p>
-                                                        <p class="text-sm text-gray-900">{!! nl2br(e(Str::limit($update->comment_preview ?? '', 150))) !!}</p>
+                                                        <div x-show="!expanded">
+                                                            <p class="text-sm text-gray-900">{!! nl2br(e(Str::limit($update->comment_preview ?? $update->comment ?? '', 150))) !!}</p>
+                                                        </div>
+                                                        <div x-show="expanded" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                                                            <div class="text-sm text-gray-900 prose prose-sm max-w-none">
+                                                                {!! nl2br(e($update->comment ?? $update->comment_preview ?? '')) !!}
+                                                            </div>
+                                                            @if($update->images && $update->images->count() > 0)
+                                                                <div class="mt-4 grid grid-cols-2 gap-3">
+                                                                    @foreach($update->images as $image)
+                                                                        <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                                                            <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
+                                                                            @if($image->description)
+                                                                                <div class="px-2 py-1 text-xs text-gray-600">{{ $image->description }}</div>
+                                                                            @endif
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                     <button 
-                                                        class="ml-3 text-blue-600 hover:text-blue-800 text-xs font-medium" 
-                                                        @click="showUpdate({{ $update->id }})"
+                                                        class="ml-3 text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap" 
+                                                        @click="expanded = !expanded"
                                                         type="button"
-                                                    >Read more</button>
+                                                        x-text="expanded ? 'Read less' : 'Read more'"
+                                                    ></button>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -562,76 +623,146 @@
 
             <!-- Documents Tab -->
             <div x-show="activeTab === 'documents'" x-transition style="display: none;">
-                @foreach ($investments as $projectId => $projectInvestments)
-                    @php 
-                        $firstInv = $projectInvestments->first();
-                        $project = $firstInv && $firstInv->project ? $firstInv->project : null;
-                        // If project is null but we have project_id, try to load it with legacy connection
-                        if (!$project && $firstInv && $firstInv->project_id) {
-                            $projectIdValue = (int) $firstInv->project_id;
-                            $project = \App\Models\Project::on('legacy')
-                                ->where('id', $projectIdValue)
-                                ->first();
-                            
-                            // If still null, try loading by external project_id as fallback
-                            if (!$project) {
-                                $project = \App\Models\Project::on('legacy')
-                                    ->where('project_id', $projectIdValue)
-                                    ->first();
-                            }
-                        }
-                    @endphp
-                    @php $documents = $projectDocuments[$projectId] ?? collect(); @endphp
-                    @php $documentLogs = $projectDocumentLogs[$projectId] ?? collect(); @endphp
-                    
-                    @if($documents->count())
-                        <div class="mb-6 bg-white border border-gray-200 rounded-lg p-6">
-                            <h3 class="text-xl font-semibold mb-4">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4">
-                                @foreach($documents as $document)
+                <div class="space-y-6">
+                    <!-- Personal Documents Section -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900">Personal Documents</h3>
+                                <p class="text-sm text-gray-500 mt-1">Your individual documents like share certificates, loan agreements, and statements</p>
+                            </div>
+                        </div>
+                        
+                        @if(isset($accountDocuments) && $accountDocuments->count() > 0)
+                            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                @foreach($accountDocuments as $document)
                                     <a href="{{ $document->url }}" target="_blank" class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group">
-                                        <i class="{{ $document->icon }} text-4xl mb-2 group-hover:scale-110 transition-transform {{ $document->status_type === 'pdf' ? 'text-red-500' : ($document->status_type === 'word' ? 'text-blue-500' : 'text-gray-500') }}"></i>
+                                        @php
+                                            $iconClass = 'fas fa-file-alt text-blue-500';
+                                            $category = strtolower($document->category ?? '');
+                                            if (str_contains($category, 'share') || str_contains($category, 'certificate')) {
+                                                $iconClass = 'fas fa-certificate text-yellow-600';
+                                            } elseif (str_contains($category, 'loan')) {
+                                                $iconClass = 'fas fa-file-signature text-green-600';
+                                            } elseif (str_contains($category, 'statement')) {
+                                                $iconClass = 'fas fa-file-invoice text-purple-600';
+                                            }
+                                        @endphp
+                                        <i class="{{ $iconClass }} text-4xl mb-2 group-hover:scale-110 transition-transform"></i>
                                         <span class="text-xs text-gray-600 group-hover:text-gray-900 text-center font-medium">
                                             {{ Str::limit($document->name ?? 'Document', 20) }}
                                         </span>
+                                        @if($document->category)
+                                            <span class="text-xs text-gray-400 mt-1">{{ ucfirst(str_replace('_', ' ', $document->category)) }}</span>
+                                        @endif
                                     </a>
                                 @endforeach
                             </div>
-                            <div class="flex items-center gap-4 pt-4 border-t">
-                                <form method="POST" action="{{ route('investor.documents.email', $project->project_id) }}" class="inline">
-                                    @csrf
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                                        <i class="fas fa-envelope mr-2"></i>Email me these documents
-                                    </button>
-                                </form>
-                                @if($documentLogs->count())
-                                    <span class="text-xs text-gray-500">
-                                        Last emailed: 
-                                        @php
-                                            $sentAt = $documentLogs->first()->sent_at ?? null;
-                                            if ($sentAt) {
-                                                if (is_string($sentAt)) {
-                                                    try {
-                                                        $sentAt = \Carbon\Carbon::parse($sentAt);
-                                                    } catch (\Exception $e) {
-                                                        $sentAt = null;
+                        @else
+                            <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                <i class="fas fa-file-alt text-gray-400 text-5xl mb-4"></i>
+                                <p class="text-gray-600 font-medium mb-2">No personal documents available</p>
+                                <p class="text-sm text-gray-500">Your share certificates, loan agreements, and other personal documents will appear here once they are uploaded.</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Project Documents Section -->
+                    @if(count($investments) > 0)
+                        @foreach ($investments as $projectId => $projectInvestments)
+                            @php 
+                                $firstInv = $projectInvestments->first();
+                                $project = $firstInv && $firstInv->project ? $firstInv->project : null;
+                                // If project is null but we have project_id, try to load it with legacy connection
+                                if (!$project && $firstInv && $firstInv->project_id) {
+                                    $projectIdValue = (int) $firstInv->project_id;
+                                    $project = \App\Models\Project::on('legacy')
+                                        ->where('id', $projectIdValue)
+                                        ->first();
+                                    
+                                    // If still null, try loading by external project_id as fallback
+                                    if (!$project) {
+                                        $project = \App\Models\Project::on('legacy')
+                                            ->where('project_id', $projectIdValue)
+                                            ->first();
+                                    }
+                                }
+                            @endphp
+                            @php $documents = $projectDocuments[$projectId] ?? collect(); @endphp
+                            @php $documentLogs = $projectDocumentLogs[$projectId] ?? collect(); @endphp
+                            
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-xl font-semibold text-gray-900">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Project documents shared with all investors</p>
+                                    </div>
+                                </div>
+                                
+                                @if($documents->count() > 0)
+                                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-4">
+                                        @foreach($documents as $document)
+                                            <a href="{{ $document->url }}" target="_blank" class="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-all group">
+                                                <i class="{{ $document->icon }} text-4xl mb-2 group-hover:scale-110 transition-transform {{ $document->status_type === 'pdf' ? 'text-red-500' : ($document->status_type === 'word' ? 'text-blue-500' : 'text-gray-500') }}"></i>
+                                                <span class="text-xs text-gray-600 group-hover:text-gray-900 text-center font-medium">
+                                                    {{ Str::limit($document->name ?? 'Document', 20) }}
+                                                </span>
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                    <div class="flex items-center gap-4 pt-4 border-t">
+                                        @if($project)
+                                            <form method="POST" action="{{ route('investor.documents.email', $project->project_id) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                                                    <i class="fas fa-envelope mr-2"></i>Email me these documents
+                                                </button>
+                                            </form>
+                                        @endif
+                                        @if($documentLogs->count())
+                                            <span class="text-xs text-gray-500">
+                                                Last emailed: 
+                                                @php
+                                                    $sentAt = $documentLogs->first()->sent_at ?? null;
+                                                    if ($sentAt) {
+                                                        if (is_string($sentAt)) {
+                                                            try {
+                                                                $sentAt = \Carbon\Carbon::parse($sentAt);
+                                                            } catch (\Exception $e) {
+                                                                $sentAt = null;
+                                                            }
+                                                        }
+                                                        if ($sentAt && ($sentAt instanceof \Carbon\Carbon || $sentAt instanceof \DateTime)) {
+                                                            echo $sentAt->format('d M Y H:i');
+                                                        } else {
+                                                            echo 'Invalid date';
+                                                        }
+                                                    } else {
+                                                        echo 'Never';
                                                     }
-                                                }
-                                                if ($sentAt && ($sentAt instanceof \Carbon\Carbon || $sentAt instanceof \DateTime)) {
-                                                    echo $sentAt->format('d M Y H:i');
-                                                } else {
-                                                    echo 'Invalid date';
-                                                }
-                                            } else {
-                                                echo 'Never';
-                                            }
-                                        @endphp
-                                    </span>
+                                                @endphp
+                                            </span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                        <i class="fas fa-folder-open text-gray-400 text-5xl mb-4"></i>
+                                        <p class="text-gray-600 font-medium mb-2">No project documents available</p>
+                                        <p class="text-sm text-gray-500">Project documents such as shareholder agreements and loan agreements will appear here once they are available.</p>
+                                    </div>
                                 @endif
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                <i class="fas fa-folder-open text-gray-400 text-5xl mb-4"></i>
+                                <p class="text-gray-600 font-medium mb-2">No investments found</p>
+                                <p class="text-sm text-gray-500">Project documents will appear here once you have investments in active projects.</p>
                             </div>
                         </div>
                     @endif
-                @endforeach
+                </div>
             </div>
 
             <!-- Payouts Tab -->
