@@ -22,6 +22,10 @@ class UpdateShowController extends Controller
                     'url' => $image->url,
                     'thumbnail_url' => $image->thumbnail_url,
                     'description' => $image->description,
+                    'file_name' => $image->file_name,
+                    'file_type' => $image->file_type,
+                    'is_image' => $image->is_image,
+                    'icon' => $image->icon,
                 ];
             }),
         ]);

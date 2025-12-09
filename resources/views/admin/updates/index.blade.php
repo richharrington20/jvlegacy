@@ -31,9 +31,9 @@
                         </select>
                     </div>
                     <div class="w-full">
-                        <label class="block text-sm font-medium mb-1 text-gray-700">Images (optional - multiple allowed)</label>
-                        <input type="file" name="images[]" accept="image/*" multiple id="image-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-xs text-gray-500 mt-1">You can select multiple images. They will be automatically resized and you can add descriptions and reorder them after upload.</p>
+                        <label class="block text-sm font-medium mb-1 text-gray-700">Files & Images (optional - multiple allowed)</label>
+                        <input type="file" name="images[]" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" multiple id="image-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">You can select multiple files (images, PDFs, Word docs, Excel files, etc.). Images will be automatically resized. You can add descriptions and reorder them after upload.</p>
                         <div id="image-preview-container" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
                         <div id="image-descriptions-container" class="mt-4 space-y-2"></div>
                     </div>
@@ -105,11 +105,35 @@
                 document.getElementById('project-select').value = projectId;
             }
 
-            // Handle multiple image previews
+            // Handle multiple file previews (images and documents)
             const imageInput = document.getElementById('image-input');
             const previewContainer = document.getElementById('image-preview-container');
             const descriptionsContainer = document.getElementById('image-descriptions-container');
             let imageFiles = [];
+
+            function getFileIcon(file) {
+                const extension = file.name.split('.').pop().toLowerCase();
+                const mimeType = file.type;
+                
+                if (mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
+                    return '<i class="fas fa-image text-blue-500 text-3xl"></i>';
+                } else if (extension === 'pdf' || mimeType.includes('pdf')) {
+                    return '<i class="fas fa-file-pdf text-red-500 text-3xl"></i>';
+                } else if (['doc', 'docx'].includes(extension) || mimeType.includes('word')) {
+                    return '<i class="fas fa-file-word text-blue-600 text-3xl"></i>';
+                } else if (['xls', 'xlsx'].includes(extension) || mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+                    return '<i class="fas fa-file-excel text-green-600 text-3xl"></i>';
+                } else if (['txt', 'csv'].includes(extension)) {
+                    return '<i class="fas fa-file-alt text-gray-500 text-3xl"></i>';
+                } else {
+                    return '<i class="fas fa-file text-gray-400 text-3xl"></i>';
+                }
+            }
+
+            function isImageFile(file) {
+                const extension = file.name.split('.').pop().toLowerCase();
+                return file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+            }
 
             imageInput.addEventListener('change', function(e) {
                 const files = Array.from(e.target.files);
@@ -119,21 +143,40 @@
                 descriptionsContainer.innerHTML = '';
 
                 files.forEach((file, index) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'relative border border-gray-300 rounded-lg overflow-hidden';
+                    const div = document.createElement('div');
+                    div.className = 'relative border border-gray-300 rounded-lg overflow-hidden bg-white';
+                    
+                    if (isImageFile(file)) {
+                        // Show image preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            div.innerHTML = `
+                                <div class="relative">
+                                    <img src="${e.target.result}" class="w-full h-32 object-cover" alt="Preview">
+                                </div>
+                                <div class="p-2 bg-gray-50">
+                                    <p class="text-xs text-gray-600 truncate">${file.name}</p>
+                                    <input type="text" name="image_descriptions[]" placeholder="File description (optional)" 
+                                           class="mt-1 w-full px-2 py-1 text-xs border border-gray-300 rounded">
+                                </div>
+                            `;
+                            previewContainer.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Show file icon for non-images
                         div.innerHTML = `
-                            <img src="${e.target.result}" class="w-full h-32 object-cover" alt="Preview">
+                            <div class="flex flex-col items-center justify-center h-32 bg-gray-50">
+                                ${getFileIcon(file)}
+                            </div>
                             <div class="p-2 bg-gray-50">
-                                <p class="text-xs text-gray-600 truncate">${file.name}</p>
-                                <input type="text" name="image_descriptions[]" placeholder="Image description (optional)" 
+                                <p class="text-xs text-gray-600 truncate text-center">${file.name}</p>
+                                <input type="text" name="image_descriptions[]" placeholder="File description (optional)" 
                                        class="mt-1 w-full px-2 py-1 text-xs border border-gray-300 rounded">
                             </div>
                         `;
                         previewContainer.appendChild(div);
-                    };
-                    reader.readAsDataURL(file);
+                    }
                 });
             });
         });

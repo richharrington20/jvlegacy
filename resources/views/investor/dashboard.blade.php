@@ -305,12 +305,19 @@
                                                 @if($update->images && $update->images->count() > 0)
                                                     <div class="mt-4 grid grid-cols-2 gap-3">
                                                         @foreach($update->images as $image)
-                                                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                                                <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
-                                                                @if($image->description)
-                                                                    <div class="px-2 py-1 text-xs text-gray-600">{{ $image->description }}</div>
+                                                            <a href="{{ $image->url }}" target="_blank" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow block">
+                                                                @if($image->is_image)
+                                                                    <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
+                                                                @else
+                                                                    <div class="flex flex-col items-center justify-center h-24 bg-white">
+                                                                        <i class="{{ $image->icon }} text-2xl mb-1"></i>
+                                                                        <span class="text-xs text-gray-600 text-center px-2 truncate w-full">{{ Str::limit($image->file_name, 15) }}</span>
+                                                                    </div>
                                                                 @endif
-                                                            </div>
+                                                                @if($image->description)
+                                                                    <div class="px-2 py-1 text-xs text-gray-600 border-t border-gray-200">{{ $image->description }}</div>
+                                                                @endif
+                                                            </a>
                                                         @endforeach
                                                     </div>
                                                 @endif
@@ -436,12 +443,19 @@
                                                             @if($update->images && $update->images->count() > 0)
                                                                 <div class="mt-4 grid grid-cols-2 gap-3">
                                                                     @foreach($update->images as $image)
-                                                                        <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                                                            <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
-                                                                            @if($image->description)
-                                                                                <div class="px-2 py-1 text-xs text-gray-600">{{ $image->description }}</div>
+                                                                        <a href="{{ $image->url }}" target="_blank" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow block">
+                                                                            @if($image->is_image)
+                                                                                <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
+                                                                            @else
+                                                                                <div class="flex flex-col items-center justify-center h-24 bg-white">
+                                                                                    <i class="{{ $image->icon }} text-2xl mb-1"></i>
+                                                                                    <span class="text-xs text-gray-600 text-center px-2 truncate w-full">{{ Str::limit($image->file_name, 15) }}</span>
+                                                                                </div>
                                                                             @endif
-                                                                        </div>
+                                                                            @if($image->description)
+                                                                                <div class="px-2 py-1 text-xs text-gray-600 border-t border-gray-200">{{ $image->description }}</div>
+                                                                            @endif
+                                                                        </a>
                                                                     @endforeach
                                                                 </div>
                                                             @endif
@@ -987,12 +1001,19 @@
                                                 @if(isset($email->images) && $email->images->count() > 0)
                                                     <div class="mt-4 grid grid-cols-2 gap-3">
                                                         @foreach($email->images as $image)
-                                                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                                                <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
-                                                                @if($image->description)
-                                                                    <div class="px-2 py-1 text-xs text-gray-600">{{ $image->description }}</div>
+                                                            <a href="{{ $image->url }}" target="_blank" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow block">
+                                                                @if(isset($image->is_image) && $image->is_image)
+                                                                    <img src="{{ $image->thumbnail_url ?? $image->url }}" alt="{{ $image->description ?? '' }}" class="w-full h-24 object-cover" onerror="this.onerror=null;this.src='{{ $image->url }}';">
+                                                                @else
+                                                                    <div class="flex flex-col items-center justify-center h-24 bg-white">
+                                                                        <i class="{{ $image->icon ?? 'fas fa-file text-gray-400' }} text-2xl mb-1"></i>
+                                                                        <span class="text-xs text-gray-600 text-center px-2 truncate w-full">{{ Str::limit($image->file_name ?? 'File', 15) }}</span>
+                                                                    </div>
                                                                 @endif
-                                                            </div>
+                                                                @if(isset($image->description) && $image->description)
+                                                                    <div class="px-2 py-1 text-xs text-gray-600 border-t border-gray-200">{{ $image->description }}</div>
+                                                                @endif
+                                                            </a>
                                                         @endforeach
                                                     </div>
                                                 @endif
@@ -1429,10 +1450,18 @@
                     <template x-if="update.images && update.images.length">
                         <div class="mt-4 grid grid-cols-2 gap-3">
                             <template x-for="img in update.images" :key="img.url">
-                                <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                    <img :src="img.thumbnail_url || img.url" alt="" class="w-full h-24 object-cover">
-                                    <div class="px-2 py-1 text-[11px] text-gray-600" x-show="img.description" x-text="img.description"></div>
-                                </div>
+                                <a :href="img.url" target="_blank" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow block">
+                                    <template x-if="img.is_image">
+                                        <img :src="img.thumbnail_url || img.url" alt="" class="w-full h-24 object-cover" @error="$el.src = img.url">
+                                    </template>
+                                    <template x-if="!img.is_image">
+                                        <div class="flex flex-col items-center justify-center h-24 bg-white">
+                                            <i :class="img.icon || 'fas fa-file text-gray-400'" class="text-2xl mb-1"></i>
+                                            <span class="text-xs text-gray-600 text-center px-2 truncate w-full" x-text="(img.file_name || 'File').substring(0, 15)"></span>
+                                        </div>
+                                    </template>
+                                    <div class="px-2 py-1 text-[11px] text-gray-600 border-t border-gray-200" x-show="img.description" x-text="img.description"></div>
+                                </a>
                             </template>
                         </div>
                     </template>

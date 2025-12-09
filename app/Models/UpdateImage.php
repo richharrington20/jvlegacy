@@ -15,6 +15,8 @@ class UpdateImage extends Model
         'update_id',
         'file_path',
         'file_name',
+        'file_type',
+        'mime_type',
         'file_size',
         'description',
         'display_order',
@@ -42,6 +44,11 @@ class UpdateImage extends Model
 
     public function getThumbnailUrlAttribute(): string
     {
+        // Only create thumbnails for images
+        if ($this->file_type !== 'image') {
+            return $this->url;
+        }
+        
         // Return resized version if it exists, otherwise original
         $pathInfo = pathinfo($this->file_path);
         $thumbnailPath = $pathInfo['dirname'] . '/thumb_' . $pathInfo['basename'];
@@ -53,6 +60,67 @@ class UpdateImage extends Model
         
         // Fallback to original image
         return $this->url;
+    }
+
+    /**
+     * Get the file type category (image, document, etc.)
+     */
+    public function getFileTypeCategoryAttribute(): string
+    {
+        if ($this->file_type) {
+            return $this->file_type;
+        }
+        
+        // Determine from mime type or extension
+        $mimeType = $this->mime_type ?? '';
+        $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        
+        if (str_starts_with($mimeType, 'image/') || in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
+            return 'image';
+        }
+        
+        if (str_starts_with($mimeType, 'application/pdf') || $extension === 'pdf') {
+            return 'pdf';
+        }
+        
+        if (str_contains($mimeType, 'word') || in_array($extension, ['doc', 'docx'])) {
+            return 'word';
+        }
+        
+        if (str_contains($mimeType, 'excel') || str_contains($mimeType, 'spreadsheet') || in_array($extension, ['xls', 'xlsx'])) {
+            return 'excel';
+        }
+        
+        if (in_array($extension, ['txt', 'csv'])) {
+            return 'text';
+        }
+        
+        return 'document';
+    }
+
+    /**
+     * Get icon class for the file type
+     */
+    public function getIconAttribute(): string
+    {
+        $category = $this->file_type_category;
+        
+        return match($category) {
+            'image' => 'fas fa-image text-blue-500',
+            'pdf' => 'fas fa-file-pdf text-red-500',
+            'word' => 'fas fa-file-word text-blue-600',
+            'excel' => 'fas fa-file-excel text-green-600',
+            'text' => 'fas fa-file-alt text-gray-500',
+            default => 'fas fa-file text-gray-400',
+        };
+    }
+
+    /**
+     * Check if file is an image
+     */
+    public function getIsImageAttribute(): bool
+    {
+        return $this->file_type_category === 'image';
     }
 }
 

@@ -66,7 +66,7 @@ class UpdateController extends Controller
             'category' => 'nullable|integer',
             'comment' => 'required|string',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'images.*' => 'file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv|max:20480',
             'image_descriptions' => 'nullable|array',
             'image_descriptions.*' => 'nullable|string|max:500',
             'existing_image_ids' => 'nullable|array',
@@ -133,7 +133,7 @@ class UpdateController extends Controller
             'category' => 'nullable|integer',
             'comment' => 'required|string',
             'images' => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'images.*' => 'file|mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv|max:20480',
             'image_descriptions' => 'nullable|array',
             'image_descriptions.*' => 'nullable|string|max:500',
         ]);
@@ -168,22 +168,45 @@ class UpdateController extends Controller
         Storage::disk('public')->makeDirectory($directory);
 
         // Generate unique filename
-        $extension = $imageFile->getClientOriginalExtension();
+        $extension = strtolower($imageFile->getClientOriginalExtension());
         $fileName = time() . '_' . Str::random(8) . '.' . $extension;
         $filePath = $directory . '/' . $fileName;
-
-        // Resize image using GD (max width 1200px, maintain aspect ratio)
-        $this->resizeImage($imageFile->getRealPath(), storage_path('app/public/' . $filePath), 1200);
+        $mimeType = $imageFile->getMimeType();
         
-        // Create thumbnail (400px width)
-        $thumbnailPath = $directory . '/thumb_' . $fileName;
-        $this->resizeImage($imageFile->getRealPath(), storage_path('app/public/' . $thumbnailPath), 400);
+        // Determine file type
+        $fileType = 'document';
+        if (str_starts_with($mimeType, 'image/') || in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
+            $fileType = 'image';
+        } elseif ($extension === 'pdf' || str_contains($mimeType, 'pdf')) {
+            $fileType = 'pdf';
+        } elseif (in_array($extension, ['doc', 'docx']) || str_contains($mimeType, 'word')) {
+            $fileType = 'word';
+        } elseif (in_array($extension, ['xls', 'xlsx']) || str_contains($mimeType, 'excel') || str_contains($mimeType, 'spreadsheet')) {
+            $fileType = 'excel';
+        } elseif (in_array($extension, ['txt', 'csv'])) {
+            $fileType = 'text';
+        }
+
+        // Only resize images
+        if ($fileType === 'image') {
+            // Resize image using GD (max width 1200px, maintain aspect ratio)
+            $this->resizeImage($imageFile->getRealPath(), storage_path('app/public/' . $filePath), 1200);
+            
+            // Create thumbnail (400px width)
+            $thumbnailPath = $directory . '/thumb_' . $fileName;
+            $this->resizeImage($imageFile->getRealPath(), storage_path('app/public/' . $thumbnailPath), 400);
+        } else {
+            // For non-image files, just store them as-is
+            $imageFile->storeAs('public/' . $directory, $fileName);
+        }
 
         // Save to database
         UpdateImage::create([
             'update_id' => $updateId,
             'file_path' => $filePath,
             'file_name' => $imageFile->getClientOriginalName(),
+            'file_type' => $fileType,
+            'mime_type' => $mimeType,
             'file_size' => $imageFile->getSize(),
             'description' => $description,
             'display_order' => $order,

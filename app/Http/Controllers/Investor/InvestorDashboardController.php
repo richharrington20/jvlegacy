@@ -274,7 +274,16 @@ class InvestorDashboardController extends Controller
                             'project' => $update->project,
                             'sent_at' => $update->sent_on,
                             'content' => $update->comment ?? '',
-                            'images' => $update->images ?? collect(),
+                            'images' => $update->images->map(function($img) {
+                                return (object)[
+                                    'url' => $img->url,
+                                    'thumbnail_url' => $img->thumbnail_url,
+                                    'description' => $img->description,
+                                    'file_name' => $img->file_name,
+                                    'is_image' => $img->is_image,
+                                    'icon' => $img->icon,
+                                ];
+                            }) ?? collect(),
                         ];
                     });
             } catch (\Exception $e) {

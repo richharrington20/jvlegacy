@@ -204,6 +204,61 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
         }
     })->name('admin.run-email-history-migration');
     
+    Route::get('/run-update-images-file-type-migration', function () {
+        try {
+            $filePath = database_path('migrations_sql/012_add_file_type_to_update_images.sql');
+            
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'File not found: ' . $filePath,
+                ], 404);
+            }
+            
+            $sql = file_get_contents($filePath);
+            
+            // Split SQL into individual statements
+            $statements = array_filter(
+                array_map('trim', explode(';', $sql)),
+                function($stmt) {
+                    return !empty($stmt) && !preg_match('/^\s*--/', $stmt);
+                }
+            );
+            
+            $executed = 0;
+            $errors = [];
+            
+            foreach ($statements as $statement) {
+                try {
+                    \DB::connection('legacy')->statement($statement);
+                    $executed++;
+                } catch (\Exception $e) {
+                    // Check if error is about column already existing
+                    if (str_contains($e->getMessage(), 'Duplicate column name') || 
+                        str_contains($e->getMessage(), 'already exists')) {
+                        // Column already exists, skip
+                        continue;
+                    }
+                    $errors[] = $e->getMessage();
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Migration completed successfully.',
+                'statements_executed' => $executed,
+                'errors' => $errors,
+            ], 200, [], JSON_PRETTY_PRINT);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error running migration.',
+                'statements_executed' => 0,
+                'errors' => [$e->getMessage()],
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    })->name('admin.run-update-images-file-type-migration');
+    
     Route::get('/run-account-shares-migration', function () {
         try {
             $filePath = database_path('migrations_sql/007_create_account_shares.sql');

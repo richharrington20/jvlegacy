@@ -1,5 +1,9 @@
 @extends('layouts.admin')
 
+@php
+use Illuminate\Support\Str;
+@endphp
+
 @section('title', 'View Update')
 
 @section('content')
@@ -45,21 +49,33 @@
 
             @if($update->images && $update->images->count())
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Images</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Files & Images</label>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         @foreach($update->images as $image)
-                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                                <img src="{{ $image->thumbnail_url }}" 
-                                     alt="{{ $image->file_name }}" 
-                                     class="w-full h-32 object-cover"
-                                     onerror="this.onerror=null; this.src='{{ $image->url }}';">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow">
+                                @if($image->is_image)
+                                    <a href="{{ $image->url }}" target="_blank" class="block">
+                                        <img src="{{ $image->thumbnail_url }}" 
+                                             alt="{{ $image->file_name }}" 
+                                             class="w-full h-32 object-cover"
+                                             onerror="this.onerror=null; this.src='{{ $image->url }}';">
+                                    </a>
+                                @else
+                                    <a href="{{ $image->url }}" target="_blank" class="block flex flex-col items-center justify-center h-32 bg-white hover:bg-gray-50 transition-colors">
+                                        <i class="{{ $image->icon }} text-4xl mb-2"></i>
+                                        <span class="text-xs text-gray-600 text-center px-2">{{ Str::limit($image->file_name, 20) }}</span>
+                                    </a>
+                                @endif
                                 @if($image->description)
                                     <div class="px-3 py-2 text-xs text-gray-700 border-t border-gray-200">
                                         {{ $image->description }}
                                     </div>
                                 @endif
-                                <div class="px-3 py-1 text-xs text-gray-500 border-t border-gray-200">
-                                    {{ $image->file_name }}
+                                <div class="px-3 py-1 text-xs text-gray-500 border-t border-gray-200 flex items-center justify-between">
+                                    <span class="truncate">{{ $image->file_name }}</span>
+                                    @if($image->file_size)
+                                        <span class="ml-2 text-gray-400">({{ number_format($image->file_size / 1024, 1) }} KB)</span>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
