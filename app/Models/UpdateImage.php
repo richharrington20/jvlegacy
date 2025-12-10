@@ -40,19 +40,24 @@ class UpdateImage extends Model
      */
     private function getFileExtension(string $filePath): string
     {
-        if (empty($filePath)) {
+        if (empty($filePath) || !is_string($filePath)) {
             return '';
         }
 
         // Find last dot position
         $lastDot = strrpos($filePath, '.');
-        if ($lastDot === false) {
+        if ($lastDot === false || $lastDot === 0) {
             return '';
         }
 
-        // Get extension after last dot
-        $extension = substr($filePath, $lastDot + 1);
-        if (!is_string($extension) || empty($extension)) {
+        // Get extension after last dot - ensure we have valid parameters
+        $startPos = $lastDot + 1;
+        if ($startPos >= strlen($filePath)) {
+            return '';
+        }
+
+        $extension = substr($filePath, $startPos);
+        if ($extension === false || !is_string($extension) || empty($extension)) {
             return '';
         }
 
@@ -66,7 +71,7 @@ class UpdateImage extends Model
     {
         $result = ['dirname' => '', 'basename' => ''];
         
-        if (empty($filePath)) {
+        if (empty($filePath) || !is_string($filePath)) {
             return $result;
         }
 
@@ -78,8 +83,30 @@ class UpdateImage extends Model
             $result['basename'] = $filePath;
             $result['dirname'] = '.';
         } else {
-            $result['dirname'] = substr($filePath, 0, $lastSlash);
-            $result['basename'] = substr($filePath, $lastSlash + 1);
+            // Get dirname (everything before last slash)
+            if ($lastSlash > 0) {
+                $dirname = substr($filePath, 0, $lastSlash);
+                if ($dirname !== false && is_string($dirname)) {
+                    $result['dirname'] = $dirname;
+                } else {
+                    $result['dirname'] = '.';
+                }
+            } else {
+                $result['dirname'] = '.';
+            }
+            
+            // Get basename (everything after last slash)
+            $startPos = $lastSlash + 1;
+            if ($startPos < strlen($filePath)) {
+                $basename = substr($filePath, $startPos);
+                if ($basename !== false && is_string($basename)) {
+                    $result['basename'] = $basename;
+                } else {
+                    $result['basename'] = $filePath;
+                }
+            } else {
+                $result['basename'] = $filePath;
+            }
         }
 
         return $result;
