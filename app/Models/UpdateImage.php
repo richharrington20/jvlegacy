@@ -39,6 +39,9 @@ class UpdateImage extends Model
     {
         // Use asset() since storage symlink exists
         // file_path format: updates/499/filename.jpg
+        if (empty($this->file_path)) {
+            return '';
+        }
         return asset('storage/' . $this->file_path);
     }
 
@@ -50,7 +53,15 @@ class UpdateImage extends Model
         }
         
         // Return resized version if it exists, otherwise original
+        if (empty($this->file_path)) {
+            return $this->url;
+        }
+        
         $pathInfo = pathinfo($this->file_path);
+        if (!isset($pathInfo['dirname']) || !isset($pathInfo['basename'])) {
+            return $this->url;
+        }
+        
         $thumbnailPath = $pathInfo['dirname'] . '/thumb_' . $pathInfo['basename'];
         
         // Check if thumbnail exists using Storage
