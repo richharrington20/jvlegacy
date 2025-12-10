@@ -1680,6 +1680,4 @@ function sharingData() {
 </script>
 @endpush
 
-@endif
-
 @endsection
