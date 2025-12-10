@@ -84,7 +84,11 @@ class UpdateImage extends Model
         
         // Determine from mime type or extension
         $mimeType = $this->mime_type ?? '';
-        $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        $extension = '';
+        
+        if (!empty($this->file_path)) {
+            $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        }
         
         if (str_starts_with($mimeType, 'image/') || in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
             return 'image';
