@@ -260,28 +260,63 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
     })->name('admin.run-update-images-file-type-migration');
     
     Route::get('/clear-cache', function () {
+        $results = [];
+        $errors = [];
+        
+        // Clear view cache
         try {
             \Artisan::call('view:clear');
-            \Artisan::call('cache:clear');
-            \Artisan::call('config:clear');
-            \Artisan::call('route:clear');
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Cache cleared successfully.',
-                'commands_run' => [
-                    'view:clear',
-                    'cache:clear',
-                    'config:clear',
-                    'route:clear',
-                ],
-            ], 200, [], JSON_PRETTY_PRINT);
+            $results[] = 'view:clear - Success';
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 500, [], JSON_PRETTY_PRINT);
+            $errors[] = 'view:clear - ' . $e->getMessage();
         }
+        
+        // Clear config cache
+        try {
+            \Artisan::call('config:clear');
+            $results[] = 'config:clear - Success';
+        } catch (\Exception $e) {
+            $errors[] = 'config:clear - ' . $e->getMessage();
+        }
+        
+        // Clear route cache
+        try {
+            \Artisan::call('route:clear');
+            $results[] = 'route:clear - Success';
+        } catch (\Exception $e) {
+            $errors[] = 'route:clear - ' . $e->getMessage();
+        }
+        
+        // Clear application cache using Cache facade (more reliable)
+        try {
+            \Illuminate\Support\Facades\Cache::flush();
+            $results[] = 'Cache::flush() - Success';
+        } catch (\Exception $e) {
+            $errors[] = 'Cache::flush() - ' . $e->getMessage();
+        }
+        
+        // Clear compiled views manually
+        try {
+            $viewPath = storage_path('framework/views');
+            if (is_dir($viewPath)) {
+                $files = glob($viewPath . '/*.php');
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        @unlink($file);
+                    }
+                }
+                $results[] = 'Manual view cache clear - Success';
+            }
+        } catch (\Exception $e) {
+            $errors[] = 'Manual view cache clear - ' . $e->getMessage();
+        }
+        
+        return response()->json([
+            'success' => count($errors) === 0,
+            'message' => count($errors) === 0 ? 'Cache cleared successfully.' : 'Cache cleared with some errors.',
+            'results' => $results,
+            'errors' => $errors,
+        ], 200, [], JSON_PRETTY_PRINT);
     })->name('admin.clear-cache');
     
     Route::get('/run-account-shares-migration', function () {
