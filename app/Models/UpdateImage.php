@@ -39,7 +39,7 @@ class UpdateImage extends Model
     {
         // Use asset() since storage symlink exists
         // file_path format: updates/499/filename.jpg
-        if (empty($this->file_path)) {
+        if (empty($this->file_path) || !is_string($this->file_path)) {
             return '';
         }
         return asset('storage/' . $this->file_path);
@@ -53,20 +53,24 @@ class UpdateImage extends Model
         }
         
         // Return resized version if it exists, otherwise original
-        if (empty($this->file_path)) {
+        if (empty($this->file_path) || !is_string($this->file_path)) {
             return $this->url;
         }
         
-        $pathInfo = pathinfo($this->file_path);
-        if (!isset($pathInfo['dirname']) || !isset($pathInfo['basename'])) {
-            return $this->url;
-        }
-        
-        $thumbnailPath = $pathInfo['dirname'] . '/thumb_' . $pathInfo['basename'];
-        
-        // Check if thumbnail exists using Storage
-        if (Storage::disk('public')->exists($thumbnailPath)) {
-            return asset('storage/' . $thumbnailPath);
+        try {
+            $pathInfo = pathinfo($this->file_path);
+            if (!is_array($pathInfo) || !isset($pathInfo['dirname']) || !isset($pathInfo['basename'])) {
+                return $this->url;
+            }
+            
+            $thumbnailPath = $pathInfo['dirname'] . '/thumb_' . $pathInfo['basename'];
+            
+            // Check if thumbnail exists using Storage
+            if (Storage::disk('public')->exists($thumbnailPath)) {
+                return asset('storage/' . $thumbnailPath);
+            }
+        } catch (\Exception $e) {
+            // If anything goes wrong, fall back to original URL
         }
         
         // Fallback to original image
@@ -86,8 +90,15 @@ class UpdateImage extends Model
         $mimeType = $this->mime_type ?? '';
         $extension = '';
         
-        if (!empty($this->file_path)) {
-            $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+        if (!empty($this->file_path) && is_string($this->file_path)) {
+            try {
+                $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+                if (!is_string($extension)) {
+                    $extension = '';
+                }
+            } catch (\Exception $e) {
+                $extension = '';
+            }
         }
         
         if (str_starts_with($mimeType, 'image/') || in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
