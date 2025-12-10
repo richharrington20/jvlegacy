@@ -275,15 +275,40 @@ class InvestorDashboardController extends Controller
                             'sent_at' => $update->sent_on,
                             'content' => $update->comment ?? '',
                             'images' => $update->images->map(function($img) {
-                                return (object)[
-                                    'url' => $img->url,
-                                    'thumbnail_url' => $img->thumbnail_url,
-                                    'description' => $img->description,
-                                    'file_name' => $img->file_name,
-                                    'is_image' => $img->is_image,
-                                    'icon' => $img->icon,
-                                ];
-                            }) ?? collect(),
+                                try {
+                                    return (object)[
+                                        'url' => $img->url ?? '',
+                                        'thumbnail_url' => $img->thumbnail_url ?? '',
+                                        'description' => $img->description ?? '',
+                                        'file_name' => $img->file_name ?? '',
+                                        'is_image' => $img->is_image ?? false,
+                                        'icon' => $img->icon ?? 'fas fa-file text-gray-400',
+                                    ];
+                                } catch (\Exception $e) {
+                                    \Log::warning('Error mapping update image: ' . $e->getMessage());
+                                    return (object)[
+                                        'url' => '',
+                                        'thumbnail_url' => '',
+                                        'description' => '',
+                                        'file_name' => '',
+                                        'is_image' => false,
+                                        'icon' => 'fas fa-file text-gray-400',
+                                    ];
+                                } catch (\Error $e) {
+                                    \Log::warning('Error mapping update image: ' . $e->getMessage());
+                                    return (object)[
+                                        'url' => '',
+                                        'thumbnail_url' => '',
+                                        'description' => '',
+                                        'file_name' => '',
+                                        'is_image' => false,
+                                        'icon' => 'fas fa-file text-gray-400',
+                                    ];
+                                }
+                            })->filter(function($img) {
+                                // Filter out images with no URL
+                                return !empty($img->url);
+                            })->values() ?? collect(),
                         ];
                     });
             } catch (\Exception $e) {

@@ -37,12 +37,22 @@ class UpdateImage extends Model
 
     public function getUrlAttribute(): string
     {
-        // Use asset() since storage symlink exists
-        // file_path format: updates/499/filename.jpg
-        if (empty($this->file_path) || !is_string($this->file_path)) {
+        try {
+            // Use asset() since storage symlink exists
+            // file_path format: updates/499/filename.jpg
+            if (empty($this->file_path) || !is_string($this->file_path)) {
+                return '';
+            }
+            $filePath = trim($this->file_path);
+            if ($filePath === '') {
+                return '';
+            }
+            return asset('storage/' . $filePath);
+        } catch (\Exception $e) {
+            return '';
+        } catch (\Error $e) {
             return '';
         }
-        return asset('storage/' . $this->file_path);
     }
 
     public function getThumbnailUrlAttribute(): string
