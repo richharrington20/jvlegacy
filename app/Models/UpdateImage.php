@@ -170,13 +170,16 @@ class UpdateImage extends Model
             return $this->url;
         }
         
+        // Access file_path directly from attributes to avoid any casting issues
+        $filePath = $this->attributes['file_path'] ?? $this->file_path ?? null;
+        
         // Return resized version if it exists, otherwise original
-        if (empty($this->file_path) || !is_string($this->file_path)) {
+        if ($filePath === null || !is_string($filePath)) {
             return $this->url;
         }
         
-        $filePath = trim($this->file_path);
-        if ($filePath === '') {
+        $filePath = trim($filePath);
+        if ($filePath === '' || strlen($filePath) === 0) {
             return $this->url;
         }
         
@@ -229,9 +232,12 @@ class UpdateImage extends Model
         $extension = '';
         
         // Safely extract extension from file_path without using pathinfo
-        if (!empty($this->file_path) && is_string($this->file_path)) {
-            $filePath = trim($this->file_path);
-            if ($filePath !== '') {
+        // Access file_path directly from attributes to avoid any casting issues
+        $filePath = $this->attributes['file_path'] ?? $this->file_path ?? null;
+        
+        if ($filePath !== null && is_string($filePath)) {
+            $filePath = trim($filePath);
+            if ($filePath !== '' && strlen($filePath) > 0) {
                 try {
                     $extension = $this->getFileExtension($filePath);
                 } catch (\Throwable $e) {
