@@ -13,24 +13,6 @@
         </button>
     </div>
 
-    <!-- Masquerading Banner -->
-    @if (session()->has('masquerading_as'))
-        <div class="mb-6 bg-brand-teal-light border-l-4 border-brand-teal p-4 rounded-lg">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <p class="text-brand-teal-dark font-semibold">Masquerading as account #{{ session('masquerading_as') }}</p>
-                    <p class="text-sm text-brand-teal-dark">Any actions you take will affect this investor.</p>
-                </div>
-                <form method="POST" action="{{ route('admin.investor.stopMasquerade') }}">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-brand-teal rounded-lg hover:bg-brand-teal-dark">
-                        Stop Masquerading
-                    </button>
-                </form>
-            </div>
-        </div>
-    @endif
-
     @if (session('status'))
         <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
             {{ session('status') }}
