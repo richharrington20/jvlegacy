@@ -1680,4 +1680,5 @@ function sharingData() {
 </script>
 @endpush
 
+{{-- End of dashboard view --}}
 @endsection
