@@ -1061,13 +1061,13 @@
                     </div>
 
                     <!-- Tickets List -->
-                    <div x-show="tickets.length === 0 && !loading" class="text-center py-12">
+                    <div x-show="tickets.length === 0 && !loading" class="text-center py-12 text-gray-900">
                         <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
                         <p class="text-gray-500">No support tickets yet</p>
                         <p class="text-sm text-gray-400 mt-2">Create your first ticket to get started</p>
                     </div>
 
-                    <div x-show="loading" class="text-center py-12">
+                    <div x-show="loading" class="text-center py-12 text-gray-900">
                         <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
                         <p class="text-gray-500 mt-2">Loading tickets...</p>
                     </div>
