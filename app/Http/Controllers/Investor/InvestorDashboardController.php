@@ -276,25 +276,38 @@ class InvestorDashboardController extends Controller
                             'content' => $update->comment ?? '',
                             'images' => $update->images->map(function($img) {
                                 try {
+                                    // Safely access all properties with individual try-catch blocks
+                                    $url = '';
+                                    $thumbnailUrl = '';
+                                    $isImage = false;
+                                    
+                                    try {
+                                        $url = $img->url ?? '';
+                                    } catch (\Throwable $e) {
+                                        $url = '';
+                                    }
+                                    
+                                    try {
+                                        $thumbnailUrl = $img->thumbnail_url ?? '';
+                                    } catch (\Throwable $e) {
+                                        $thumbnailUrl = $url;
+                                    }
+                                    
+                                    try {
+                                        $isImage = $img->is_image ?? false;
+                                    } catch (\Throwable $e) {
+                                        $isImage = false;
+                                    }
+                                    
                                     return (object)[
-                                        'url' => $img->url ?? '',
-                                        'thumbnail_url' => $img->thumbnail_url ?? '',
+                                        'url' => is_string($url) ? $url : '',
+                                        'thumbnail_url' => is_string($thumbnailUrl) ? $thumbnailUrl : $url,
                                         'description' => $img->description ?? '',
                                         'file_name' => $img->file_name ?? '',
-                                        'is_image' => $img->is_image ?? false,
+                                        'is_image' => (bool)$isImage,
                                         'icon' => $img->icon ?? 'fas fa-file text-gray-400',
                                     ];
-                                } catch (\Exception $e) {
-                                    \Log::warning('Error mapping update image: ' . $e->getMessage());
-                                    return (object)[
-                                        'url' => '',
-                                        'thumbnail_url' => '',
-                                        'description' => '',
-                                        'file_name' => '',
-                                        'is_image' => false,
-                                        'icon' => 'fas fa-file text-gray-400',
-                                    ];
-                                } catch (\Error $e) {
+                                } catch (\Throwable $e) {
                                     \Log::warning('Error mapping update image: ' . $e->getMessage());
                                     return (object)[
                                         'url' => '',
@@ -307,7 +320,7 @@ class InvestorDashboardController extends Controller
                                 }
                             })->filter(function($img) {
                                 // Filter out images with no URL
-                                return !empty($img->url);
+                                return !empty($img->url) && is_string($img->url);
                             })->values() ?? collect(),
                         ];
                     });
