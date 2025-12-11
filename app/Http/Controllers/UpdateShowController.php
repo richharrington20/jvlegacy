@@ -17,59 +17,32 @@ class UpdateShowController extends Controller
             'sent_on' => $update->sent_on ? $update->sent_on->format('d M Y H:i') : null,
             'comment' => $update->comment,
             'category' => $update->category,
-            'images' => $update->images->map(function ($image) {
+            'images' => $update->images->filter(function ($image) {
+                // Only return actual images - filter by file_type or check if it's an image
                 try {
-                    // Safely access all properties with fallbacks
-                    $url = '';
-                    $thumbnailUrl = '';
-                    $isImage = false;
-                    
-                    try {
-                        $url = $image->url ?? '';
-                    } catch (\Throwable $e) {
-                        $url = '';
+                    $fileType = $image->file_type ?? '';
+                    // If file_type is set and it's not 'image', skip it
+                    if ($fileType !== '' && $fileType !== 'image') {
+                        return false;
                     }
-                    
-                    try {
-                        $thumbnailUrl = $image->thumbnail_url ?? '';
-                    } catch (\Throwable $e) {
-                        $thumbnailUrl = $url;
-                    }
-                    
-                    try {
-                        $isImage = $image->is_image ?? false;
-                    } catch (\Throwable $e) {
-                        $isImage = false;
-                    }
-                    
+                    // If file_type is empty, assume it's an image (legacy behavior)
+                    return !empty($image->file_path);
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            })->map(function ($image) {
+                try {
                     return [
-                        'url' => is_string($url) ? $url : '',
-                        'thumbnail_url' => is_string($thumbnailUrl) ? $thumbnailUrl : $url,
+                        'url' => $image->url ?? '',
+                        'thumbnail_url' => $image->thumbnail_url ?? '',
                         'description' => $image->description ?? '',
-                        'file_name' => $image->file_name ?? '',
-                        'file_type' => $image->file_type ?? '',
-                        'is_image' => (bool)$isImage,
-                        'icon' => $image->icon ?? 'fas fa-file text-gray-400',
                     ];
                 } catch (\Throwable $e) {
-                    // If there's any error accessing image properties, return safe defaults
-                    \Log::warning('Error mapping update image: ' . $e->getMessage(), [
-                        'image_id' => $image->id ?? null,
-                        'update_id' => $update->id ?? null,
-                    ]);
-                    return [
-                        'url' => '',
-                        'thumbnail_url' => '',
-                        'description' => '',
-                        'file_name' => '',
-                        'file_type' => '',
-                        'is_image' => false,
-                        'icon' => 'fas fa-file text-gray-400',
-                    ];
+                    return null;
                 }
             })->filter(function ($image) {
-                // Filter out images with no URL
-                return !empty($image['url']) && is_string($image['url']);
+                // Filter out null values and images with no URL
+                return $image !== null && !empty($image['url']);
             })->values(),
         ]);
     }

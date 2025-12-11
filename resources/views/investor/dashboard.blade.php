@@ -1378,15 +1378,7 @@
                         <div class="mt-4 grid grid-cols-2 gap-3">
                             <template x-for="img in update.images" :key="img.url">
                                 <a :href="img.url" target="_blank" class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:shadow-md transition-shadow block">
-                                    <template x-if="img.is_image && (img.thumbnail_url || img.url)">
-                                        <img :src="(img.thumbnail_url && img.thumbnail_url !== '') ? img.thumbnail_url : (img.url || '')" alt="" class="w-full h-24 object-cover" @error="$el.src = img.url || ''">
-                                    </template>
-                                    <template x-if="!img.is_image">
-                                        <div class="flex flex-col items-center justify-center h-24 bg-white">
-                                            <i :class="img.icon || 'fas fa-file text-gray-400'" class="text-2xl mb-1"></i>
-                                            <span class="text-xs text-gray-600 text-center px-2 truncate w-full" x-text="(img.file_name || 'File').substring(0, 15)"></span>
-                                        </div>
-                                    </template>
+                                    <img :src="img.thumbnail_url || img.url" alt="" class="w-full h-24 object-cover" @error="$el.src = img.url">
                                     <div class="px-2 py-1 text-[11px] text-gray-600 border-t border-gray-200" x-show="img.description" x-text="img.description"></div>
                                 </a>
                             </template>
