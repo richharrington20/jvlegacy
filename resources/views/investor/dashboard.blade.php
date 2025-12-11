@@ -391,7 +391,7 @@
                                     <h4 class="font-semibold mb-3 text-brand-purple-dark">Project Updates</h4>
                                     <div class="space-y-3" x-data="{ expandedUpdates: {} }">
                                         @foreach($updates->take(1) as $update)
-                                            <div class="bg-white p-3 rounded border border-brand-purple-light" x-data="{ expanded: false }">
+                                            <div class="bg-white p-3 rounded border border-slate-200" x-data="{ expanded: false }">
                                                 <div class="flex items-start justify-between">
                                                     <div class="flex-1">
                                                         <p class="text-xs text-gray-500 mb-1">
@@ -446,7 +446,7 @@
                                                         </div>
                                                     </div>
                                                     <button 
-                                                        class="ml-3 text-brand-teal hover:text-brand-teal-dark text-xs font-medium whitespace-nowrap" 
+                                                        class="ml-3 text-slate-600 hover:text-slate-800 text-xs font-medium whitespace-nowrap" 
                                                         @click="expanded = !expanded"
                                                         type="button"
                                                         x-text="expanded ? 'Read less' : 'Read more'"
@@ -456,7 +456,7 @@
                                         @endforeach
                                     </div>
                                     @if($updates->count() > 3 && $project && $project->project_id)
-                                        <a href="{{ route('public.projects.show', $project->project_id) }}" class="mt-3 inline-block text-sm text-brand-teal hover:underline">
+                                        <a href="{{ route('public.projects.show', $project->project_id) }}" class="mt-3 inline-block text-sm text-slate-600 hover:text-slate-800 hover:underline">
                                             View all {{ $updates->count() }} updates
                                         </a>
                                     @endif
