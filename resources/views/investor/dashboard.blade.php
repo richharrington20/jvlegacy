@@ -732,12 +732,12 @@
                     
                     @if($payouts->count())
                         <div class="mb-6 bg-white border border-gray-200 rounded-lg overflow-hidden">
-                            <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-4 text-white">
+                            <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-4">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-xl font-bold">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
+                                    <h3 class="text-xl font-bold text-white">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
                                     <div class="text-right">
-                                        <p class="text-sm text-green-100">Total Paid</p>
-                                        <p class="text-2xl font-bold">{!! money($totalPaid) !!}</p>
+                                        <p class="text-sm text-white opacity-90">Total Paid</p>
+                                        <p class="text-2xl font-bold text-white">{!! money($totalPaid) !!}</p>
                                     </div>
                                 </div>
                             </div>
