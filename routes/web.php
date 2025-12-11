@@ -259,6 +259,62 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
         }
     })->name('admin.run-update-images-file-type-migration');
     
+    Route::get('/run-update-images-columns-migration', function () {
+        try {
+            // Check if columns already exist
+            $hasFileType = \Illuminate\Support\Facades\Schema::connection('legacy')->hasColumn('update_images', 'file_type');
+            $hasMimeType = \Illuminate\Support\Facades\Schema::connection('legacy')->hasColumn('update_images', 'mime_type');
+            
+            if ($hasFileType && $hasMimeType) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'file_type and mime_type columns already exist in update_images table!',
+                    'columns_added' => 0,
+                    'note' => 'The columns are already present in the database.',
+                ], 200, [], JSON_PRETTY_PRINT);
+            }
+            
+            // Run the migration
+            \Artisan::call('migrate', [
+                '--path' => 'database/migrations/2025_12_11_000001_add_file_type_and_mime_type_to_update_images_table.php',
+                '--force' => true,
+            ]);
+            
+            // Verify columns were added
+            $hasFileTypeAfter = \Illuminate\Support\Facades\Schema::connection('legacy')->hasColumn('update_images', 'file_type');
+            $hasMimeTypeAfter = \Illuminate\Support\Facades\Schema::connection('legacy')->hasColumn('update_images', 'mime_type');
+            
+            $columnsAdded = 0;
+            if ($hasFileTypeAfter && !$hasFileType) $columnsAdded++;
+            if ($hasMimeTypeAfter && !$hasMimeType) $columnsAdded++;
+            
+            if ($hasFileTypeAfter && $hasMimeTypeAfter) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'file_type and mime_type columns added successfully to update_images table!',
+                    'columns_added' => $columnsAdded,
+                    'output' => \Artisan::output(),
+                    'note' => 'You can now upload images and documents to updates.',
+                ], 200, [], JSON_PRETTY_PRINT);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Migration ran but columns were not added.',
+                    'columns_added' => $columnsAdded,
+                    'output' => \Artisan::output(),
+                    'errors' => ['Column verification failed'],
+                ], 500, [], JSON_PRETTY_PRINT);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error running migration.',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500, [], JSON_PRETTY_PRINT);
+        }
+    })->name('admin.run-update-images-columns-migration');
+    
     Route::get('/clear-cache', function () {
         $results = [];
         $errors = [];
