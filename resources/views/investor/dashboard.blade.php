@@ -347,7 +347,7 @@
                                     <p class="text-white opacity-90">Project ID: {{ $project->project_id ?? 'N/A' }}</p>
                                 </div>
                                 <button
-                                    class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                                    class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors text-white"
                                     onclick="document.getElementById('support-modal-{{ $projectId }}').showModal()"
                                 >
                                     <i class="fas fa-headset mr-2"></i>Support
@@ -1367,13 +1367,13 @@
         <div class="relative bg-white rounded-lg shadow-lg max-w-lg w-full p-6 z-10">
             <button @click="close" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
             <template x-if="loading">
-                <div class="text-center py-8">Loading...</div>
+                <div class="text-center py-8 text-gray-900">Loading...</div>
             </template>
             <template x-if="!loading && update">
                 <div>
                     <div class="mb-2 text-xs text-gray-500" x-text="update.sent_on"></div>
-                    <div class="font-bold mb-2">Project Update</div>
-                    <div class="prose mb-2" x-html="update.comment"></div>
+                    <div class="font-bold mb-2 text-gray-900">Project Update</div>
+                    <div class="prose mb-2 text-gray-900" x-html="update.comment"></div>
                 </div>
             </template>
         </div>
