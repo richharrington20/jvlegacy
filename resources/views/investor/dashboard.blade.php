@@ -340,10 +340,10 @@
                     
                     @if($project)
                     <div class="mb-8 bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="bg-gradient-to-r from-brand-magenta to-brand-purple p-6 text-white">
+                        <div class="bg-gradient-to-r from-brand-magenta to-brand-purple p-6">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-2xl font-bold mb-2">{{ $project->name ?? 'Project #' . ($project->project_id ?? $project->id) }}</h3>
+                                    <h3 class="text-2xl font-bold mb-2 text-white">{{ $project->name ?? 'Project #' . ($project->project_id ?? $project->id) }}</h3>
                                     <p class="text-white opacity-90">Project ID: {{ $project->project_id ?? 'N/A' }}</p>
                                 </div>
                                 <button
@@ -466,11 +466,11 @@
                     @else
                     <!-- Project not found - show investments anyway -->
                     <div class="mb-8 bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6 text-white">
+                        <div class="bg-gradient-to-r from-gray-600 to-gray-700 p-6">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-2xl font-bold mb-2">Project Not Found</h3>
-                                    <p class="text-gray-300">Project ID: {{ $projectId ?? 'N/A' }}</p>
+                                    <h3 class="text-2xl font-bold mb-2 text-white">Project Not Found</h3>
+                                    <p class="text-white opacity-90">Project ID: {{ $projectId ?? 'N/A' }}</p>
                                 </div>
                             </div>
                         </div>
