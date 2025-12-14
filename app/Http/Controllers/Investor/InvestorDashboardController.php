@@ -354,21 +354,70 @@ class InvestorDashboardController extends Controller
             }
         }
 
-        return view('investor.dashboard', compact(
-            'account',
-            'investments',
-            'projectUpdates',
-            'projectDocuments',
-            'projectDocumentLogs',
-            'projectPayouts',
-            'projectTimelines',
-            'notifications',
-            'unreadNotifications',
-            'supportTickets',
-            'systemStatus',
-            'emailHistory',
-            'accountDocuments'
-        ));
+        // #region agent log
+        $logPath = storage_path('../.cursor/debug.log');
+        try {
+            $logEntry = json_encode([
+                'id' => 'log_' . time() . '_' . uniqid(),
+                'timestamp' => (int)(microtime(true) * 1000),
+                'location' => 'InvestorDashboardController.php:357',
+                'message' => 'Rendering investor.dashboard view',
+                'data' => [
+                    'view_name' => 'investor.dashboard',
+                    'view_path' => resource_path('views/investor/dashboard.blade.php'),
+                    'view_exists' => file_exists(resource_path('views/investor/dashboard.blade.php')),
+                ],
+                'sessionId' => 'debug-session',
+                'runId' => 'runtime',
+                'hypothesisId' => 'R',
+            ], JSON_PRETTY_PRINT) . "\n";
+            @file_put_contents($logPath, $logEntry, FILE_APPEND);
+        } catch (\Exception $e) {
+            // Ignore logging errors
+        }
+        // #endregion agent log
+
+        try {
+            return view('investor.dashboard', compact(
+                'account',
+                'investments',
+                'projectUpdates',
+                'projectDocuments',
+                'projectDocumentLogs',
+                'projectPayouts',
+                'projectTimelines',
+                'notifications',
+                'unreadNotifications',
+                'supportTickets',
+                'systemStatus',
+                'emailHistory',
+                'accountDocuments'
+            ));
+        } catch (\Exception $e) {
+            // #region agent log
+            try {
+                $errorLog = json_encode([
+                    'id' => 'log_' . time() . '_' . uniqid(),
+                    'timestamp' => (int)(microtime(true) * 1000),
+                    'location' => 'InvestorDashboardController.php:357',
+                    'message' => 'View rendering error',
+                    'data' => [
+                        'error' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString(),
+                    ],
+                    'sessionId' => 'debug-session',
+                    'runId' => 'runtime',
+                    'hypothesisId' => 'R',
+                ], JSON_PRETTY_PRINT) . "\n";
+                @file_put_contents($logPath, $errorLog, FILE_APPEND);
+            } catch (\Exception $logErr) {
+                // Ignore logging errors
+            }
+            // #endregion agent log
+            throw $e;
+        }
     }
 
     protected function buildTimeline(Project $project): array
