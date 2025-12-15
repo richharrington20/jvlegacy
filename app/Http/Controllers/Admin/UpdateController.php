@@ -445,13 +445,29 @@ class UpdateController extends Controller
         $dummyUpdate->sent_on = now();
 
         try {
-            Mail::to('chris@jaevee.co.uk')->send(
+            Mail::mailer('postmark')->to('chris@jaevee.co.uk')->send(
                 new ProjectUpdateMail($dummyAccount, $dummyProject, $dummyUpdate)
             );
-            return 'Test email sent.';
+            return 'Test email sent via Postmark.';
         } catch (\Exception $e) {
             \Log::error('Failed to send test update email: ' . $e->getMessage());
-            return 'Failed to send test email.';
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return 'Failed to send test email: ' . $e->getMessage();
         }
+    }
+
+    // Resend update emails to all investors
+    public function resend($id)
+    {
+        $update = Update::findOrFail($id);
+        
+        $emailCount = $this->dispatchBulkEmails($update);
+        
+        // Update sent_on timestamp to reflect the resend
+        $update->sent_on = now();
+        $update->save();
+        
+        return redirect()->route('admin.updates.index', ['project_id' => $update->project_id])
+            ->with('success', "Update emails resent successfully. {$emailCount} investors notified.");
     }
 }

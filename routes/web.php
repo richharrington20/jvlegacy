@@ -766,6 +766,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
 
     // Selective Email
     Route::post('/updates/{update}/selective-email', [UpdateController::class, 'sendSelectiveEmails'])->name('updates.selective_email');
+    
+    // Resend update emails to all investors
+    Route::post('/updates/{id}/resend', [UpdateController::class, 'resend'])->name('updates.resend');
 
 });
 
