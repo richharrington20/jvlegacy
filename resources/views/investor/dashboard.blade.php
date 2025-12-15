@@ -859,7 +859,11 @@
                         <div class="mb-6 bg-white border border-gray-200 rounded-lg overflow-hidden">
                             <div class="bg-gradient-to-r from-green-600 to-emerald-600 p-4">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-xl font-bold text-white">{{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}</h3>
+                                    <h3 class="text-xl font-bold text-white">
+                                        <a href="#investments" @click="activeTab = 'investments'; setTimeout(() => document.querySelector('[data-project-id=\'{{ $projectId }}\']')?.scrollIntoView({behavior: 'smooth', block: 'start'}), 100)" class="hover:underline">
+                                            {{ $project ? ($project->name ?? 'Project #' . ($project->project_id ?? $project->id)) : 'Unknown Project' }}
+                                        </a>
+                                    </h3>
                                     <div class="text-right">
                                         <p class="text-sm text-white opacity-90">Total Paid</p>
                                         <p class="text-2xl font-bold text-white">{!! money($totalPaid) !!}</p>
@@ -981,7 +985,7 @@
                                                                 {{ $email->type_label ?? 'Email' }}
                                                             </span>
                                                             @if(isset($email->project) && $email->project)
-                                                                <span class="text-xs text-gray-500">• {{ $email->project->name ?? 'Unknown Project' }}</span>
+                                                                <a href="#investments" @click="activeTab = 'investments'; setTimeout(() => { const projectId = '{{ $email->project->id ?? '' }}'; const element = document.querySelector('[data-project-id=\'' + projectId + '\']'); if (element) element.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 100)" class="text-xs text-brand-teal hover:text-brand-teal-dark hover:underline">• {{ $email->project->name ?? 'Unknown Project' }}</a>
                                                             @endif
                                                         </div>
                                                         <h4 class="text-sm font-semibold text-gray-900 mb-1">
@@ -1182,9 +1186,10 @@
 
                     <!-- Tickets List -->
                     <div x-show="tickets.length === 0 && !loading" class="text-center py-12 text-gray-900">
-                        <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500">No support tickets yet</p>
-                        <p class="text-sm text-gray-400 mt-2">Create your first ticket to get started</p>
+                        <i class="fas fa-inbox text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-600 font-medium mb-2">No support tickets yet</p>
+                        <p class="text-sm text-gray-500 mb-4">Create your first ticket to get started. Our team typically responds within 24-48 hours.</p>
+                        <p class="text-xs text-gray-400">Common questions: payout dates, document access, investment details, account sharing</p>
                     </div>
 
                     <div x-show="loading" class="text-center py-12 text-gray-900">
