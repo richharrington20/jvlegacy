@@ -1,4 +1,4 @@
-
+@extends('layouts.app')
 
 @section('content')
 <div class="mx-auto mt-10" x-data="{ activeTab: 'overview' }">
