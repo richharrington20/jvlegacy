@@ -315,18 +315,20 @@ class UpdateController extends Controller
             return 0;
         }
 
-        // Send to investors
+        // Send to investors using Postmark mailer
         foreach ($investorAccounts as $investorAccount) {
             try {
-                Mail::to($investorAccount->email)->send(
+                Mail::mailer('postmark')->to($investorAccount->email)->send(
                     new ProjectUpdateMail($investorAccount, $project, $update)
                 );
+                \Log::info("Update email sent successfully to {$investorAccount->email} via Postmark");
             } catch (\Exception $e) {
                 \Log::error("Failed to send update email to {$investorAccount->email}: " . $e->getMessage());
+                \Log::error("Stack trace: " . $e->getTraceAsString());
             }
         }
 
-        // Also send to Ben and Scott (internal)
+        // Also send to Ben and Scott (internal) using Postmark mailer
         $internalEmails = ['ben@rise-capital.uk', 'scott@rise-capital.uk'];
         foreach ($internalEmails as $email) {
             try {
@@ -336,11 +338,13 @@ class UpdateController extends Controller
                 $dummyAccount->person = null;
                 $dummyAccount->company = null;
                 
-                Mail::to($email)->send(
+                Mail::mailer('postmark')->to($email)->send(
                     new ProjectUpdateMail($dummyAccount, $project, $update)
                 );
+                \Log::info("Update email sent successfully to {$email} via Postmark");
             } catch (\Exception $e) {
                 \Log::error("Failed to send update email to {$email}: " . $e->getMessage());
+                \Log::error("Stack trace: " . $e->getTraceAsString());
             }
         }
 
@@ -395,11 +399,13 @@ class UpdateController extends Controller
                 $dummyAccount->person = null;
                 $dummyAccount->company = null;
                 
-                Mail::to($email)->send(
+                Mail::mailer('postmark')->to($email)->send(
                     new ProjectUpdateMail($dummyAccount, $project, $update)
                 );
+                \Log::info("Test update email sent successfully to {$email} via Postmark");
             } catch (\Exception $e) {
                 \Log::error("Failed to send test update email to {$email}: " . $e->getMessage());
+                \Log::error("Stack trace: " . $e->getTraceAsString());
             }
         }
 

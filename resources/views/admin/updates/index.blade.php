@@ -234,6 +234,13 @@
                                     <i class="fas fa-envelope mr-1"></i>
                                     Email
                                 </a>
+                                <form method="POST" action="{{ route('admin.updates.resend', $update->id) }}" class="inline" onsubmit="return confirm('Resend this update email to all investors?');">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded hover:bg-green-200 transition-colors">
+                                        <i class="fas fa-redo mr-1"></i>
+                                        Resend
+                                    </button>
+                                </form>
                                 <form method="POST" action="{{ route('admin.updates.destroy', $update->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this update?');">
                                     @csrf
                                     @method('DELETE')

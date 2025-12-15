@@ -88,6 +88,12 @@ use Illuminate\Support\Str;
             <h3 class="text-lg font-semibold mb-3">Actions</h3>
             <div class="flex gap-2">
                 <a href="{{ route('admin.updates.bulk_email_preflight', $update->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Send Email to Investors</a>
+                <form method="POST" action="{{ route('admin.updates.resend', $update->id) }}" class="inline" onsubmit="return confirm('Resend this update email to all investors?');">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        <i class="fas fa-redo mr-1"></i>Resend Update
+                    </button>
+                </form>
                 <form method="POST" action="{{ route('admin.updates.selective_email', $update->id) }}" class="inline">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Send Test Email</button>
