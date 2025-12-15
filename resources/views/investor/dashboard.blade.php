@@ -1096,13 +1096,16 @@
                         <div class="p-12 text-center">
                             <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
                             <p class="text-gray-600 font-medium mb-2">No email history yet</p>
-                            <p class="text-sm text-gray-500">Emails sent to you from the system will appear here, including:</p>
-                            <ul class="text-sm text-gray-500 mt-3 space-y-1">
+                            <p class="text-sm text-gray-500 mb-3">Emails sent to you from the system will appear here, including:</p>
+                            <ul class="text-sm text-gray-500 mb-4 space-y-1">
                                 <li>• Project update notifications</li>
                                 <li>• Document delivery emails</li>
                                 <li>• Support ticket confirmations</li>
                                 <li>• Payout notifications</li>
                             </ul>
+                            <button @click="activeTab = 'helpdesk'" class="text-sm text-brand-teal hover:text-brand-teal-dark font-medium">
+                                <i class="fas fa-question-circle mr-1"></i>Need help with email notifications?
+                            </button>
                         </div>
                     @endif
                 </div>
