@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investor;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ProjectUpdateMail;
 use App\Models\AccountDocument;
 use App\Models\AccountShare;
 use App\Models\DocumentEmailLog;
@@ -12,7 +13,9 @@ use App\Models\Project;
 use App\Models\ProjectQuarterlyIncomePayee;
 use App\Models\SupportTicket;
 use App\Models\SystemStatus;
+use App\Models\Update;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class InvestorDashboardController extends Controller
 {
@@ -524,5 +527,45 @@ class InvestorDashboardController extends Controller
             'expected_payout' => $expectedPayout,
             'investment_term' => optional($project->property)->investment_turnaround_time,
         ];
+    }
+
+    /**
+     * Resend an update email to the logged-in investor
+     */
+    public function resendUpdate($id)
+    {
+        $account = auth('investor')->user();
+        $update = Update::with(['project', 'images'])->findOrFail($id);
+        
+        // Verify the investor has access to this update's project
+        $hasAccess = $account->investments()
+            ->where('project_id', $update->project_id)
+            ->where('paid', 1)
+            ->exists();
+        
+        if (!$hasAccess) {
+            return redirect()->route('investor.dashboard')
+                ->with('error', 'You do not have access to this update.');
+        }
+        
+        $project = $update->project;
+        
+        try {
+            // Send email using Postmark
+            Mail::mailer('postmark')->to($account->email)->send(
+                new ProjectUpdateMail($account, $project, $update)
+            );
+            
+            \Log::info("Update email resent to investor {$account->email} (update ID: {$update->id}) via Postmark");
+            
+            return redirect()->route('investor.dashboard')
+                ->with('success', 'Update email has been sent to ' . $account->email);
+        } catch (\Exception $e) {
+            \Log::error("Failed to resend update email to {$account->email}: " . $e->getMessage());
+            \Log::error("Stack trace: " . $e->getTraceAsString());
+            
+            return redirect()->route('investor.dashboard')
+                ->with('error', 'Failed to send email. Please try again later.');
+        }
     }
 }

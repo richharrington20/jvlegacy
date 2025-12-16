@@ -798,6 +798,9 @@ Route::prefix('investor')->name('investor.')->group(function () {
             Route::post('/account-shares', [\App\Http\Controllers\Investor\AccountShareController::class, 'store'])->name('account-shares.store');
             Route::delete('/account-shares/{shareId}', [\App\Http\Controllers\Investor\AccountShareController::class, 'destroy'])->name('account-shares.destroy');
             Route::post('/account-shares/{shareId}/remove', [\App\Http\Controllers\Investor\AccountShareController::class, 'removeSharedAccess'])->name('account-shares.remove');
+            
+            // Resend update email to logged-in investor
+            Route::post('/updates/{id}/resend', [InvestorDashboardController::class, 'resendUpdate'])->name('updates.resend');
     });
 });
 

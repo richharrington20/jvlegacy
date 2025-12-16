@@ -132,6 +132,24 @@
 
         <!-- Tab Content -->
         <div class="p-6">
+            <!-- Success/Error Messages -->
+            @if(session('success'))
+                <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+            
             <!-- Overview Tab -->
             <div x-show="activeTab === 'overview'" x-transition>
                 @php
@@ -494,12 +512,21 @@
                                                             </div>
                                                         @endif
                                                     </div>
-                                                    <button 
-                                                        class="ml-3 text-slate-600 hover:text-slate-800 text-xs font-medium whitespace-nowrap" 
-                                                        @click="expanded = !expanded"
-                                                        type="button"
-                                                        x-text="expanded ? 'Read less' : 'Read more'"
-                                                    ></button>
+                                                    <div class="flex items-center gap-2">
+                                                        <form method="POST" action="{{ route('investor.updates.resend', $update->id) }}" class="inline" onsubmit="return confirm('Resend this update email to {{ auth('investor')->user()->email }}?');">
+                                                            @csrf
+                                                            <button type="submit" class="text-slate-600 hover:text-slate-800 text-xs font-medium whitespace-nowrap inline-flex items-center" title="Resend update email to me">
+                                                                <i class="fas fa-envelope mr-1"></i>
+                                                                Resend to me
+                                                            </button>
+                                                        </form>
+                                                        <button 
+                                                            class="text-slate-600 hover:text-slate-800 text-xs font-medium whitespace-nowrap" 
+                                                            @click="expanded = !expanded"
+                                                            type="button"
+                                                            x-text="expanded ? 'Read less' : 'Read more'"
+                                                        ></button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
