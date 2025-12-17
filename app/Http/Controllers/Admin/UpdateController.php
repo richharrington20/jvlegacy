@@ -310,9 +310,30 @@ class UpdateController extends Controller
     {
         $update = Update::findOrFail($id);
         $emailcount = $this->dispatchBulkEmails($update);
+        
+        // Provide more informative feedback
+        if ($emailcount == 0) {
+            $project = Project::where('project_id', $update->project_id)->first();
+            if (!$project) {
+                return redirect()->route('admin.updates.index')
+                    ->with('error', 'Update not sent: Project not found for this update.');
+            }
+            
+            $investorCount = Investments::where('project_id', $project->id)
+                ->where('paid', 1)
+                ->count();
+            
+            if ($investorCount == 0) {
+                return redirect()->route('admin.updates.index')
+                    ->with('warning', 'Update not sent: No investors with paid investments found for this project.');
+            } else {
+                return redirect()->route('admin.updates.index')
+                    ->with('warning', 'Update not sent: No valid investor emails found (0 investors notified).');
+            }
+        }
 
         return redirect()->route('admin.updates.index')
-            ->with('success', $emailcount . ' investors notified.');
+            ->with('success', $emailcount . ' investor' . ($emailcount !== 1 ? 's' : '') . ' notified.');
     }
 
     protected function dispatchBulkEmails(Update $update)
@@ -465,15 +486,23 @@ class UpdateController extends Controller
     public function bulkEmailPreflight($id)
     {
         $update = Update::findOrFail($id);
+        
+        // Find the project by external project_id first
+        $project = Project::where('project_id', $update->project_id)->first();
+        
+        $investorAccounts = collect();
+        if ($project) {
+            // Use the project's internal id to find investments
+            $investorAccounts = Investments::where('project_id', $project->id)
+                ->where('paid', 1)
+                ->with('account')
+                ->get()
+                ->pluck('account')
+                ->filter()
+                ->unique('email');
+        }
 
-        $investorAccounts = Investments::where('project_id', $update->project_id)
-            ->with('account')
-            ->get()
-            ->pluck('account')
-            ->filter()
-            ->unique('email');
-
-        return view('admin.updates.bulk_email_preflight', compact('update', 'investorAccounts'));
+        return view('admin.updates.bulk_email_preflight', compact('update', 'investorAccounts', 'project'));
     }
 
     // Function to send a test email

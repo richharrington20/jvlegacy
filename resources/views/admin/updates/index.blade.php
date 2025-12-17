@@ -21,6 +21,14 @@
                 </div>
             </div>
         @endif
+        @if(session('warning'))
+            <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>{{ session('warning') }}</span>
+                </div>
+            </div>
+        @endif
         
         <div class="flex items-center justify-between mb-6">
             <div>
