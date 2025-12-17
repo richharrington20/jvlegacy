@@ -70,6 +70,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth:investor')->group(funct
     Route::get('/changelog/create', [ChangelogController::class, 'create'])->name('changelog.create');
     Route::post('/changelog', [ChangelogController::class, 'store'])->name('changelog.store');
     
+    // Email Templates
+    Route::get('/email-templates', [\App\Http\Controllers\Admin\EmailTemplateController::class, 'index'])->name('email-templates.index');
+    Route::get('/email-templates/{id}', [\App\Http\Controllers\Admin\EmailTemplateController::class, 'show'])->name('email-templates.show');
+    Route::get('/email-templates/{id}/edit', [\App\Http\Controllers\Admin\EmailTemplateController::class, 'edit'])->name('email-templates.edit');
+    Route::put('/email-templates/{id}', [\App\Http\Controllers\Admin\EmailTemplateController::class, 'update'])->name('email-templates.update');
+    Route::get('/email-templates/{id}/preview', [\App\Http\Controllers\Admin\EmailTemplateController::class, 'preview'])->name('email-templates.preview');
+    Route::post('/email-templates/{id}/send-test', [\App\Http\Controllers\Admin\EmailTemplateController::class, 'sendTest'])->name('email-templates.send-test');
+    
     // Migration routes (accessible from admin)
     Route::get('/run-system-status-updates-migration', function () {
         try {

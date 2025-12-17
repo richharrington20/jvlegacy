@@ -105,6 +105,13 @@
                                 <i class="fas fa-envelope w-5 text-center mr-3 {{ str_starts_with($currentRoute, 'admin.email-logs') ? 'text-teal-400' : 'text-slate-400 group-hover:text-teal-400' }}"></i>
                                 <span>Email Log</span>
                             </a>
+                            <a href="{{ route('admin.email-templates.index') }}" class="group relative flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 {{ str_starts_with($currentRoute, 'admin.email-templates') ? 'bg-slate-800/50 text-white' : 'text-slate-300 hover:bg-slate-800/30 hover:text-white' }}">
+                                @if(str_starts_with($currentRoute, 'admin.email-templates'))
+                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-teal-400 rounded-r"></div>
+                                @endif
+                                <i class="fas fa-file-alt w-5 text-center mr-3 {{ str_starts_with($currentRoute, 'admin.email-templates') ? 'text-teal-400' : 'text-slate-400 group-hover:text-teal-400' }}"></i>
+                                <span>Email Templates</span>
+                            </a>
                         </div>
                     </div>
                 @elseif($account && $account->type_id == 8)

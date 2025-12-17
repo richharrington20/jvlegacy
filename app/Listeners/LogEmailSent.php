@@ -31,8 +31,14 @@ class LogEmailSent
 
             // Extract Postmark message ID from response if available
             $postmarkMessageId = null;
-            if (isset($event->sent->getOriginalMessage()->getHeaders()->get('X-PM-Message-Id'))) {
-                $postmarkMessageId = $event->sent->getOriginalMessage()->getHeaders()->get('X-PM-Message-Id')->getValue();
+            try {
+                $headers = $event->sent->getOriginalMessage()->getHeaders();
+                $pmHeader = $headers->get('X-PM-Message-Id');
+                if ($pmHeader !== null) {
+                    $postmarkMessageId = $pmHeader->getValue();
+                }
+            } catch (\Exception $e) {
+                // Postmark message ID not available, continue without it
             }
 
             // Get HTML and text content
