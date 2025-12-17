@@ -48,7 +48,24 @@ class UpdateController extends Controller
     public function show($id)
     {
         $update = Update::with(['project', 'images'])->findOrFail($id);
-        return view('admin.updates.show', compact('update'));
+        
+        // Calculate how many investors should receive this update
+        $investorCount = 0;
+        if ($update->project_id) {
+            $project = Project::where('project_id', $update->project_id)->first();
+            if ($project) {
+                $investorCount = Investments::where('project_id', $project->id)
+                    ->where('paid', 1)
+                    ->with('account')
+                    ->get()
+                    ->pluck('account')
+                    ->filter()
+                    ->unique('email')
+                    ->count();
+            }
+        }
+        
+        return view('admin.updates.show', compact('update', 'investorCount'));
     }
 
     public function edit($id)

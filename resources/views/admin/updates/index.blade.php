@@ -219,7 +219,22 @@
                         <td class="px-6 py-4 text-sm text-gray-600">
                             <div class="max-w-md truncate">{{ $update->comment_preview }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ human_date($update->sent_on) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">{{ human_date($update->sent_on) }}</span>
+                                @if($update->sent == 1)
+                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800" title="Emails sent to investors">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Emailed
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800" title="Emails not yet sent">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>
+                                        Not sent
+                                    </span>
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center space-x-2">
                                 <a href="{{ route('admin.updates.show', $update->id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors">

@@ -36,8 +36,40 @@ use Illuminate\Support\Str;
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700">Sent On</label>
-                <p class="mt-1 text-gray-900">{{ $update->sent_on ? $update->sent_on->format('d M Y H:i') : 'Not sent' }}</p>
+                <label class="block text-sm font-medium text-gray-700">Email Status</label>
+                <div class="mt-1 flex items-center gap-3 flex-wrap">
+                    @if($update->sent == 1)
+                        <span class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-full bg-green-100 text-green-800 border border-green-200">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Emails Sent
+                        </span>
+                        @if(isset($investorCount) && $investorCount > 0)
+                            <span class="text-sm text-gray-600">
+                                to {{ $investorCount }} investor{{ $investorCount !== 1 ? 's' : '' }}
+                            </span>
+                        @endif
+                        @if($update->sent_on)
+                            <span class="text-sm text-gray-600">
+                                on {{ $update->sent_on->format('d M Y H:i') }}
+                            </span>
+                        @endif
+                    @else
+                        <span class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            Emails Not Sent
+                        </span>
+                        @if(isset($investorCount) && $investorCount > 0)
+                            <span class="text-sm text-gray-500">
+                                ({{ $investorCount }} investor{{ $investorCount !== 1 ? 's' : '' }} would receive this)
+                            </span>
+                        @endif
+                        @if($update->sent_on)
+                            <span class="text-sm text-gray-600">
+                                Created: {{ $update->sent_on->format('d M Y H:i') }}
+                            </span>
+                        @endif
+                    @endif
+                </div>
             </div>
 
             <div>
