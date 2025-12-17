@@ -527,12 +527,20 @@ class UpdateController extends Controller
             );
         }
 
-        // Mark update as sent
-        $update->sent = 1;
-        $update->save();
+        // Mark update as sent only if at least one email was successfully sent
+        if ($sentCount > 0 || $internalSentCount > 0) {
+            $update->sent = 1;
+            $update->save();
+        }
 
-        // Return total number of recipients, including internal emails
-        return $sentCount + $internalSentCount;
+        // Return array with detailed results for better error handling
+        return [
+            'sent' => $sentCount + $internalSentCount,
+            'attempted' => $attemptedCount,
+            'failed' => $failedCount,
+            'skipped' => $skippedCount,
+            'total_accounts' => $investorAccounts->count(),
+        ];
     }
 
     // Function to send update email to just Ben, Scott and Chris
