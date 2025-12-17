@@ -370,19 +370,36 @@ class UpdateController extends Controller
 
         // Investments table uses internal 'id', not external 'project_id'
         // So we need to find investments by the project's internal id
-        $investorAccounts = Investments::where('project_id', $project->id)
+        $investments = Investments::where('project_id', $project->id)
             ->where('paid', 1)
             ->with('account')
-            ->get()
+            ->get();
+        
+        \Log::info("Found " . $investments->count() . " paid investments for project {$project->project_id} (internal id: {$project->id})");
+        
+        // Extract accounts and filter out nulls and accounts without emails
+        $investorAccounts = $investments
             ->pluck('account')
-            ->filter()
+            ->filter(function ($account) {
+                return $account && !empty($account->email);
+            })
             ->unique('email');
 
-        // Log how many investors found
-        \Log::info("Found " . $investorAccounts->count() . " investors for project {$project->project_id} (internal id: {$project->id})");
+        // Log how many valid investor accounts found
+        \Log::info("Found " . $investorAccounts->count() . " valid investor accounts with emails for project {$project->project_id}");
+        
+        // Log account details for debugging
+        foreach ($investorAccounts as $idx => $account) {
+            \Log::info("Investor account #{$idx}: ID {$account->id}, Email: {$account->email}");
+        }
         
         if ($investorAccounts->count() === 0) {
-            \Log::warning("No investors found for project {$project->project_id}. No emails will be sent.");
+            \Log::warning("No valid investor accounts found for project {$project->project_id}. No emails will be sent.");
+            // Log why accounts might be missing
+            $totalInvestments = $investments->count();
+            $nullAccounts = $investments->filter(fn($inv) => !$inv->account)->count();
+            $noEmailAccounts = $investments->filter(fn($inv) => $inv->account && empty($inv->account->email))->count();
+            \Log::warning("Breakdown: {$totalInvestments} investments, {$nullAccounts} with null accounts, {$noEmailAccounts} with accounts but no email");
         }
 
         // Load images for the update before sending emails
