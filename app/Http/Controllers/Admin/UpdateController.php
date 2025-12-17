@@ -300,19 +300,30 @@ class UpdateController extends Controller
 
     protected function dispatchBulkEmails(Update $update)
     {
-        $investorAccounts = Investments::where('project_id', $update->project_id)
+        // First, find the project by external project_id
+        $project = Project::where('project_id', $update->project_id)->first();
+
+        // If project doesn't exist, log error and skip sending emails
+        if (!$project) {
+            \Log::error("Project not found for update ID {$update->id} (project_id: {$update->project_id}). Cannot send update emails.");
+            return 0;
+        }
+
+        // Investments table uses internal 'id', not external 'project_id'
+        // So we need to find investments by the project's internal id
+        $investorAccounts = Investments::where('project_id', $project->id)
+            ->where('paid', 1)
             ->with('account')
             ->get()
             ->pluck('account')
             ->filter()
             ->unique('email');
 
-        $project = Project::find($update->project_id);
-
-        // If project doesn't exist, log error and skip sending emails
-        if (!$project) {
-            \Log::error("Project not found for update ID {$update->id} (project_id: {$update->project_id}). Cannot send update emails.");
-            return 0;
+        // Log how many investors found
+        \Log::info("Found " . $investorAccounts->count() . " investors for project {$project->project_id} (internal id: {$project->id})");
+        
+        if ($investorAccounts->count() === 0) {
+            \Log::warning("No investors found for project {$project->project_id}. No emails will be sent.");
         }
 
         // Load images for the update before sending emails
@@ -321,17 +332,27 @@ class UpdateController extends Controller
         }
 
         // Send to investors using Postmark mailer
+        $sentCount = 0;
         foreach ($investorAccounts as $investorAccount) {
+            if (!$investorAccount || !$investorAccount->email) {
+                \Log::warning("Skipping investor account with no email");
+                continue;
+            }
+            
             try {
+                \Log::info("Attempting to send update email to {$investorAccount->email} via Postmark");
                 Mail::mailer('postmark')->to($investorAccount->email)->send(
                     new ProjectUpdateMail($investorAccount, $project, $update)
                 );
+                $sentCount++;
                 \Log::info("Update email sent successfully to {$investorAccount->email} via Postmark");
             } catch (\Exception $e) {
                 \Log::error("Failed to send update email to {$investorAccount->email}: " . $e->getMessage());
                 \Log::error("Stack trace: " . $e->getTraceAsString());
             }
         }
+        
+        \Log::info("Total emails sent: {$sentCount} out of " . $investorAccounts->count() . " investors");
 
         // Also send to Ben and Scott (internal) using Postmark mailer
         $internalEmails = ['ben@rise-capital.uk', 'scott@rise-capital.uk'];
@@ -370,11 +391,11 @@ class UpdateController extends Controller
             );
         }
 
-        // Count emails sent (including internal recipients)
-        $investorCount = $investorAccounts->count();
-        $internalCount = count($internalEmails);
+        // Mark update as sent
+        $update->sent = 1;
+        $update->save();
 
-        return $investorCount + $internalCount;
+        return $sentCount + $internalSentCount;
     }
 
     // Function to send update email to just Ben, Scott and Chris
