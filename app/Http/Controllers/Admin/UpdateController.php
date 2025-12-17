@@ -372,6 +372,8 @@ class UpdateController extends Controller
         \Log::info("Total emails sent: {$sentCount} out of " . $investorAccounts->count() . " investors");
 
         // Also send to Ben and Scott (internal) using Postmark mailer
+        // Track how many internal emails we send so we can include them in the total count
+        $internalSentCount = 0;
         $internalEmails = ['ben@rise-capital.uk', 'scott@rise-capital.uk'];
         foreach ($internalEmails as $email) {
             try {
@@ -384,6 +386,7 @@ class UpdateController extends Controller
                 Mail::mailer('postmark')->to($email)->send(
                     new ProjectUpdateMail($dummyAccount, $project, $update)
                 );
+                $internalSentCount++;
                 \Log::info("Update email sent successfully to {$email} via Postmark");
             } catch (\Exception $e) {
                 \Log::error("Failed to send update email to {$email}: " . $e->getMessage());
@@ -412,6 +415,7 @@ class UpdateController extends Controller
         $update->sent = 1;
         $update->save();
 
+        // Return total number of recipients, including internal emails
         return $sentCount + $internalSentCount;
     }
 
