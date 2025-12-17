@@ -172,7 +172,12 @@ class UpdateController extends Controller
             }
         }
         
-        $emailcount = $this->dispatchBulkEmails($update);
+        $result = $this->dispatchBulkEmails($update);
+        
+        // Handle array result (new format) or integer (backward compatibility)
+        $emailcount = is_array($result) ? $result['sent'] : $result;
+        $attempted = is_array($result) ? $result['attempted'] : 0;
+        $failed = is_array($result) ? $result['failed'] : 0;
         
         // Provide more informative feedback when creating updates
         if ($emailcount == 0) {
@@ -189,14 +194,29 @@ class UpdateController extends Controller
             if ($investorCount == 0) {
                 return redirect()->route('admin.updates.index', ['project_id' => $update->project_id])
                     ->with('warning', 'Update posted but not sent: No investors with paid investments found for this project.');
-            } else {
+            } elseif ($attempted > 0 && $failed > 0) {
+                // Investors exist with valid emails, but sending failed
+                return redirect()->route('admin.updates.index', ['project_id' => $update->project_id])
+                    ->with('error', "Update posted but emails failed to send. Attempted {$attempted} email(s), all failed. Please check logs and try again.");
+            } elseif ($attempted == 0) {
+                // No valid emails found
                 return redirect()->route('admin.updates.index', ['project_id' => $update->project_id])
                     ->with('warning', 'Update posted but not sent: No valid investor emails found.');
+            } else {
+                // Fallback case
+                return redirect()->route('admin.updates.index', ['project_id' => $update->project_id])
+                    ->with('warning', 'Update posted but not sent: No emails were sent.');
             }
         }
 
+        // Success message
+        $message = 'Update posted and ' . $emailcount . ' investor' . ($emailcount !== 1 ? 's' : '') . ' notified.';
+        if ($failed > 0) {
+            $message .= " ({$failed} email(s) failed to send - check logs for details)";
+        }
+        
         return redirect()->route('admin.updates.index', ['project_id' => $update->project_id])
-            ->with('success', 'Update posted and ' . $emailcount . ' investor' . ($emailcount !== 1 ? 's' : '') . ' notified.');
+            ->with($failed > 0 ? 'warning' : 'success', $message);
     }
 
     protected function processUpdateImage($updateId, $imageFile, $description = null, $order = 0)
@@ -330,7 +350,12 @@ class UpdateController extends Controller
     public function sendBulkEmails($id)
     {
         $update = Update::findOrFail($id);
-        $emailcount = $this->dispatchBulkEmails($update);
+        $result = $this->dispatchBulkEmails($update);
+        
+        // Handle array result (new format) or integer (backward compatibility)
+        $emailcount = is_array($result) ? $result['sent'] : $result;
+        $attempted = is_array($result) ? $result['attempted'] : 0;
+        $failed = is_array($result) ? $result['failed'] : 0;
         
         // Provide more informative feedback
         if ($emailcount == 0) {
@@ -347,14 +372,29 @@ class UpdateController extends Controller
             if ($investorCount == 0) {
                 return redirect()->route('admin.updates.index')
                     ->with('warning', 'Update not sent: No investors with paid investments found for this project.');
-            } else {
+            } elseif ($attempted > 0 && $failed > 0) {
+                // Investors exist with valid emails, but sending failed
+                return redirect()->route('admin.updates.index')
+                    ->with('error', "Update not sent: Email delivery failed. Attempted {$attempted} email(s), all failed. Please check logs and try again.");
+            } elseif ($attempted == 0) {
+                // No valid emails found
                 return redirect()->route('admin.updates.index')
                     ->with('warning', 'Update not sent: No valid investor emails found (0 investors notified).');
+            } else {
+                // Fallback case
+                return redirect()->route('admin.updates.index')
+                    ->with('warning', 'Update not sent: No emails were sent.');
             }
         }
 
+        // Success message
+        $message = $emailcount . ' investor' . ($emailcount !== 1 ? 's' : '') . ' notified.';
+        if ($failed > 0) {
+            $message .= " ({$failed} email(s) failed to send - check logs for details)";
+        }
+        
         return redirect()->route('admin.updates.index')
-            ->with('success', $emailcount . ' investor' . ($emailcount !== 1 ? 's' : '') . ' notified.');
+            ->with($failed > 0 ? 'warning' : 'success', $message);
     }
 
     protected function dispatchBulkEmails(Update $update)
@@ -410,6 +450,9 @@ class UpdateController extends Controller
         // Send to investors using Postmark mailer
         $sentCount = 0;
         $skippedCount = 0;
+        $failedCount = 0;
+        $attemptedCount = 0;
+        
         foreach ($investorAccounts as $index => $investorAccount) {
             \Log::info("Processing investor account #{$index}: " . ($investorAccount ? "ID {$investorAccount->id}" : "NULL"));
             
@@ -425,6 +468,9 @@ class UpdateController extends Controller
                 continue;
             }
             
+            // This account has a valid email, so we're attempting to send
+            $attemptedCount++;
+            
             try {
                 \Log::info("Attempting to send update email to {$investorAccount->email} (Account ID: {$investorAccount->id}) via Postmark");
                 Mail::mailer('postmark')->to($investorAccount->email)->send(
@@ -433,12 +479,13 @@ class UpdateController extends Controller
                 $sentCount++;
                 \Log::info("Update email sent successfully to {$investorAccount->email} via Postmark");
             } catch (\Exception $e) {
+                $failedCount++;
                 \Log::error("Failed to send update email to {$investorAccount->email}: " . $e->getMessage());
                 \Log::error("Stack trace: " . $e->getTraceAsString());
             }
         }
         
-        \Log::info("Email sending summary: {$sentCount} sent, {$skippedCount} skipped, " . $investorAccounts->count() . " total accounts found");
+        \Log::info("Email sending summary: {$sentCount} sent, {$failedCount} failed, {$skippedCount} skipped, {$attemptedCount} attempted, " . $investorAccounts->count() . " total accounts found");
         
         \Log::info("Total emails sent: {$sentCount} out of " . $investorAccounts->count() . " investors");
 
