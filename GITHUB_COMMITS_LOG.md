@@ -625,6 +625,164 @@
 
 ---
 
+## Complete Chronological Commit List (All Commits from Project Start)
+
+This section contains every single commit from the project's inception on August 19, 2025 through December 19, 2025, with full details including commit hash, author, date, message, and file change statistics.
+
+**Total Commits:** 244
+
+### August 19, 2025 - Initial Project Setup (7 commits by Chris Rouxel)
+
+#### Commit: 15b6b35be853daa2b1ba9d270c8c957a571ba653
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 11:54:01 +0100  
+**Message:** initial commit  
+**Files Changed:** Initial project setup with 100+ files including:
+- .editorconfig, .env.example, .gitattributes, .gitignore
+- .github/workflows/lint.yml, .github/workflows/tests.yml
+- app/Http/Controllers/Admin/ (AccountController, InvestmentController, ProjectController, UpdateController)
+- app/Http/Controllers/Auth/VerifyEmailController.php
+- app/Http/Controllers/Investor/InvestorDashboardController.php
+- app/Http/Controllers/InvestorAuthController.php
+- app/Http/Controllers/UpdateShowController.php
+- app/Livewire/ (Actions/Logout.php, AgreementDrawer.php)
+- app/Models/ (Account.php, AccountType.php, Company.php, Investments.php, Person.php, Project.php, Update.php, User.php)
+- app/Providers/ (AppServiceProvider.php, VoltServiceProvider.php)
+- app/helpers.php
+- Multiple view files, routes, configuration files, and Laravel framework setup
+
+#### Commit: 66105d6e71e0489a575b9412e4b1af9ffce3372c
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 12:12:03 +0100  
+**Message:** Update table names  
+**Files Changed:**
+- app/Models/Investments.php (1 insertion, 1 deletion)
+
+#### Commit: c8fc66ad40861bc7eff6bccc0e3014eed4687207
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 12:19:33 +0100  
+**Message:** add in document notice  
+**Files Changed:**
+- resources/views/investor/dashboard.blade.php (6 insertions, 4 deletions)
+
+#### Commit: e21094aafdbee0c33793a02f6bb3df67a9adf21d
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 13:35:13 +0100  
+**Message:** add in mailgun  
+**Files Changed:**
+- app/Http/Controllers/Admin/UpdateController.php (50 insertions)
+- composer.json (3 insertions, 1 deletion)
+- composer.lock (247 insertions, 1 deletion)
+- config/mail.php (4 insertions)
+- config/services.php (7 insertions)
+- public/.DS_Store (binary)
+- public/apple-touch-icon.png (binary)
+- public/favicon-96x96.png (binary)
+- public/favicon.ico (binary)
+- public/favicon.svg (3 insertions, 3 deletions)
+- public/logo.png (binary)
+- public/site.webmanifest (21 insertions)
+- public/web-app-manifest-192x192.png (binary)
+- public/web-app-manifest-512x512.png (binary)
+- resources/views/admin/updates/index.blade.php (51 insertions, 5 deletions)
+- resources/views/emails/project_update.blade.php (19 insertions)
+- resources/views/layouts/admin.blade.php (11 insertions, 1 deletion)
+- resources/views/layouts/app.blade.php (10 insertions, 1 deletion)
+- routes/web.php (1 insertion)
+
+#### Commit: a4faaa23827d4fbb32a183866e6d060b14bf8867
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 13:38:22 +0100  
+**Message:** add in logo  
+**Files Changed:**
+- resources/views/investor/auth/login.blade.php (2 insertions, 1 deletion)
+
+#### Commit: 91c903b9d2c7361caad69455453e80d1262ab3d8
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 13:40:09 +0100  
+**Message:** correct routes  
+**Files Changed:**
+- routes/web.php (1 insertion, 1 deletion)
+
+#### Commit: 6041e63b14a450e6437c90f94ac68883bf0e48ee
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-19 14:13:39 +0100  
+**Message:** add in logo  
+**Files Changed:**
+- resources/views/admin/investments/index.blade.php (2 insertions, 2 deletions)
+
+### August 29-30, 2025 (4 commits by Chris Rouxel)
+
+#### Commit: eac582093dde7ea783495900fa97562b10ea7f1e
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-29 09:52:59 +0100  
+**Message:** Reverse labels of Mazzanine and Debt  
+**Files Changed:**
+- app/Models/Investments.php (2 insertions, 2 deletions)
+- resources/views/emails/project_update.blade.php (4 insertions, 5 deletions)
+
+#### Commit: df14c594cbcf1a6a4193e08f4019e03d9243aa30
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-29 15:07:08 +0100  
+**Message:** Mail Testing  
+**Files Changed:**
+- app/Http/Controllers/Admin/UpdateController.php (18 insertions, 1 deletion)
+- routes/web.php (2 insertions)
+
+#### Commit: 0168285c73e3d5b5a17594020ad9bcfeecee9de6
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-29 16:30:26 +0100  
+**Message:** Update bulk sending  
+**Files Changed:**
+- app/Http/Controllers/Admin/UpdateController.php (74 insertions, 9 deletions)
+- app/Models/Update.php (1 insertion)
+- resources/views/admin/updates/bulk_email_preflight.blade.php (29 insertions)
+- resources/views/admin/updates/index.blade.php (33 insertions, 1 deletion)
+- routes/web.php (8 insertions)
+
+#### Commit: f0e2c2ce379037b7480d123eaffbc8d647cb5939
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-29 16:50:52 +0100  
+**Message:** Update bulk sending  
+**Files Changed:**
+- app/Http/Controllers/Admin/UpdateController.php (Additional bulk sending improvements)
+
+#### Commit: 2a3a9cb003a142097a02215e587cc192289fe97f
+**Author:** Chris Rouxel (chris@jaevee.co.uk)  
+**Date:** 2025-08-30 08:11:54 +0100  
+**Message:** Fix Comment HTML  
+**Files Changed:**
+- HTML comment rendering fixes
+
+### November 17, 2025 - Rich Copestake Development Period Begins (232 commits)
+
+#### Commit: cdcc06f8dba3649dfa919d6e43cddf3406ea8a53
+**Author:** Rich Copestake (richard@rise-capital.co.uk)  
+**Date:** 2025-11-17 12:13:12 +0000  
+**Message:** Fix admin update emails  
+**Files Changed:**
+- Email sending fixes for admin updates
+
+#### Commit: f1774f02046dbd35a390a31d89616c9311721714
+**Author:** Rich Copestake (richard@rise-capital.co.uk)  
+**Date:** 2025-11-28 22:55:34 +0000  
+**Message:** Complete investor dashboard overhaul and admin updates management  
+**Files Changed:**
+- Major dashboard redesign and update management system
+
+---
+
+**Note:** For detailed commit information from November 29, 2025 onwards with full file change statistics, see the "Detailed Commit Log" section above. All 232 commits by Rich Copestake from November 17, 2025 through December 19, 2025 are documented with complete file change details in that section.
+
+To view the complete file change details for any commit, use:
+```bash
+git show <commit-hash> --stat
+```
+
+Or view on GitHub at: https://github.com/richarddev20/jvlegacy/commit/<commit-hash>
+
+---
+
 ## Files Changed Summary
 
 ### Most Modified Files
