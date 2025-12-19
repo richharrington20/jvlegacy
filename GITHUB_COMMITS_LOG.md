@@ -22,8 +22,8 @@
 
 | Metric | Count |
 |--------|-------|
-| **Total Commits** | 243 |
-| **Commits by Rich Copestake** | 231 |
+| **Total Commits** | 244 |
+| **Commits by Rich Copestake** | 232 |
 | **Commits by Chris Rouxel** | 12 |
 | **Date Range** | Aug 19, 2025 - Dec 19, 2025 |
 | **Project Start Date** | August 19, 2025 |
@@ -685,7 +685,7 @@ December 2025:
 ## Developer Contributions
 
 ### Rich Copestake (richard@rise-capital.co.uk)
-- **Total Commits:** 231
+- **Total Commits:** 232
 - **Primary Focus:** Full-stack development, bug fixes, feature implementation
 - **Key Areas:** Dashboard, email system, admin panel, bug fixes
 - **Period:** November 17, 2025 - December 19, 2025
@@ -702,7 +702,7 @@ December 2025:
 
 **Repository:** github.com/richarddev20/jvlegacy  
 **Branch:** main  
-**Total Commits (Complete History):** 243  
+**Total Commits (Complete History):** 244  
 **Lines Added:** ~8,000+  
 **Lines Deleted:** ~3,000+  
 **Net Change:** ~5,000+ lines  
