@@ -24,5 +24,12 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Mail\Events\MessageSent::class,
             \App\Listeners\LogEmailSent::class
         );
+
+        // Register MongoDB setup command
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Console\Commands\SetupMongoDB::class,
+            ]);
+        }
     }
 }
