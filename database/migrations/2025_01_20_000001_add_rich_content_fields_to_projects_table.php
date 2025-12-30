@@ -9,6 +9,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Skip if using MongoDB (NoSQL doesn't need schema changes)
+        $driver = config('database.connections.legacy.driver');
+        if ($driver === 'mongodb') {
+            // MongoDB automatically handles new fields - no migration needed
+            return;
+        }
+        
         // Add rich content fields to projects table
         Schema::connection('legacy')->table('projects', function (Blueprint $table) {
             // Map and location
@@ -40,6 +47,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Skip if using MongoDB
+        $driver = config('database.connections.legacy.driver');
+        if ($driver === 'mongodb') {
+            return;
+        }
+        
         Schema::connection('legacy')->table('projects', function (Blueprint $table) {
             $table->dropColumn([
                 'map_embed_code',
