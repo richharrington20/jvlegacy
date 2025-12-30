@@ -16,46 +16,76 @@ class SetupMongoDB extends Command
         $this->info('🚀 Setting up MongoDB database structure...');
         $this->newLine();
 
-        // Validate MongoDB configuration before attempting connection
-        $dsn = config('database.connections.legacy.dsn');
-        $host = config('database.connections.legacy.host');
-        $username = config('database.connections.legacy.username');
-        $password = config('database.connections.legacy.password');
+        // Collect MongoDB configuration values
+        $config = [
+            'dsn' => config('database.connections.legacy.dsn'),
+            'host' => config('database.connections.legacy.host'),
+            'port' => config('database.connections.legacy.port', 27017),
+            'username' => config('database.connections.legacy.username'),
+            'password' => config('database.connections.legacy.password'),
+            'database' => config('database.connections.legacy.database', 'admin'),
+            'auth_database' => config('database.connections.legacy.options.database', 'admin'),
+        ];
+        
+        $dsn = $config['dsn'];
+        $host = $config['host'];
+        $username = $config['username'];
+        $password = $config['password'];
         
         // Check if host is already a connection string (mongodb:// or mongodb+srv://)
         $hostIsConnectionString = !empty($host) && (str_starts_with($host, 'mongodb://') || str_starts_with($host, 'mongodb+srv://'));
         
-        if (empty($dsn) && empty($host)) {
-            $this->error('❌ MongoDB configuration is missing!');
+        // Determine if we have enough information to connect
+        $hasDsn = !empty($dsn);
+        $hasHost = !empty($host);
+        $hasCredentials = !empty($username) && !empty($password);
+        $hasEnoughInfo = $hasDsn || ($hasHost && $hasCredentials);
+        
+        if (!$hasEnoughInfo) {
+            $this->error('❌ MongoDB configuration is incomplete!');
             $this->newLine();
-            $this->line('Please set one of the following in your .env file:');
-            $this->line('  - DB_LEGACY_DSN (full connection string), OR');
-            $this->line('  - DB_LEGACY_HOST (hostname/IP address or connection string)');
+            
+            // Display current config values
+            $this->displayConfigValues($config);
+            
+            // Provide specific guidance based on what's missing
+            $this->error('Missing required configuration:');
             $this->newLine();
-            $this->line('Example DSN:');
+            
+            if (!$hasDsn && !$hasHost) {
+                $this->line('  ❌ Either DB_LEGACY_DSN or DB_LEGACY_HOST must be set');
+            } elseif ($hasHost && !$hasCredentials) {
+                $this->line('  ❌ DB_LEGACY_USERNAME and DB_LEGACY_PASSWORD are required when using DB_LEGACY_HOST');
+            }
+            
+            $this->newLine();
+            $this->line('📝 Configuration options:');
+            $this->newLine();
+            
+            $this->line('Option 1: Use full connection string (DSN)');
             $this->line('  DB_LEGACY_DSN=mongodb+srv://username:password@host/database?authSource=admin');
             $this->newLine();
-            $this->line('Example Host (will build DSN automatically):');
-            $this->line('  DB_LEGACY_HOST=your-mongodb-host');
-            $this->line('  DB_LEGACY_PORT=27017');
-            $this->line('  DB_LEGACY_USERNAME=your-username');
-            $this->line('  DB_LEGACY_PASSWORD=your-password');
-            $this->line('  DB_LEGACY_DATABASE=your-database');
-            $this->newLine();
-            $this->line('For DigitalOcean MongoDB SRV:');
-            $this->line('  DB_LEGACY_HOST=mongodb+srv://hostname (or use DB_LEGACY_DSN with full string)');
-            return 1;
-        }
-        
-        // If host looks like a connection string but we have username/password, we need to build proper DSN
-        if ($hostIsConnectionString && !empty($username) && !empty($password)) {
-            // Extract hostname from connection string
-            $hostname = preg_replace('/^mongodb\+?srv?:\/\//', '', $host);
-            $hostname = preg_replace('/\/.*$/', '', $hostname); // Remove path if present
-            $hostname = preg_replace('/\?.*$/', '', $hostname); // Remove query string if present
             
-            // Use the host as base but we'll rebuild it in getMongoClient
-            // For now, just note that we have what we need
+            $this->line('Option 2: Use separate variables');
+            if (!$hasHost) {
+                $this->line('  DB_LEGACY_HOST=your-mongodb-host (or mongodb+srv://hostname for SRV)');
+            }
+            if (!$hasCredentials) {
+                $this->line('  DB_LEGACY_USERNAME=your-username');
+                $this->line('  DB_LEGACY_PASSWORD=your-password');
+            }
+            $this->line('  DB_LEGACY_DATABASE=your-database (optional, defaults to admin)');
+            $this->line('  DB_LEGACY_PORT=27017 (optional, defaults to 27017)');
+            $this->newLine();
+            
+            $this->line('💡 For DigitalOcean MongoDB:');
+            $this->line('  - Use mongodb+srv:// protocol for SRV connections');
+            $this->line('  - Set DB_LEGACY_AUTHENTICATION_DATABASE=admin if different from database');
+            $this->newLine();
+            
+            $this->warn('After updating .env, run: php artisan config:clear');
+            
+            return 1;
         }
 
         try {
@@ -128,6 +158,32 @@ class SetupMongoDB extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Safely display config values for debugging (masking sensitive data)
+     */
+    protected function displayConfigValues(array $config): void
+    {
+        $this->line('📋 Current MongoDB configuration:');
+        $this->newLine();
+        
+        $displayConfig = [
+            'DSN' => $config['dsn'] ?? '❌ Not set',
+            'Host' => $config['host'] ?? '❌ Not set',
+            'Port' => $config['port'] ?? '27017 (default)',
+            'Username' => $config['username'] ?? '❌ Not set',
+            'Password' => !empty($config['password']) ? '***' . substr($config['password'], -2) : '❌ Not set',
+            'Database' => $config['database'] ?? 'admin (default)',
+            'Auth Database' => $config['auth_database'] ?? 'admin (default)',
+        ];
+        
+        foreach ($displayConfig as $key => $value) {
+            $status = str_contains($value, '❌') ? '  ❌' : '  ✓';
+            $this->line("{$status} {$key}: {$value}");
+        }
+        
+        $this->newLine();
     }
 
     protected function getMongoClient($connection = null)
